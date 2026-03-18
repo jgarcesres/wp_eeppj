@@ -3,7 +3,9 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - 'theme/v*'
+      - 'pqrrs/v*'
+      - 'carousel/v*'
 
 permissions:
   contents: write
@@ -15,26 +17,76 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Build theme ZIP
+      - name: Parse tag
+        id: tag
         run: |
-          cd wp-content/themes
-          zip -r ../../eeppj-theme.zip eeppj/
+          TAG="${GITHUB_REF#refs/tags/}"
+          COMPONENT="${TAG%%/*}"
+          VERSION="${TAG#*/v}"
 
-      - name: Build PQRRS plugin ZIP
-        run: |
-          cd wp-content/plugins
-          zip -r ../../eeppj-pqrrs.zip eeppj-pqrrs/
+          case "$COMPONENT" in
+            theme)    ZIP="eeppj-theme.zip" ;;
+            pqrrs)    ZIP="eeppj-pqrrs.zip" ;;
+            carousel) ZIP="eeppj-carousel.zip" ;;
+            *) echo "::error::Unknown component: $COMPONENT"; exit 1 ;;
+          esac
 
-      - name: Build Carousel plugin ZIP
+          echo "component=$COMPONENT" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
+          echo "Releasing: $COMPONENT v$VERSION → $ZIP"
+
+      - name: Validate version matches code
         run: |
-          cd wp-content/plugins
-          zip -r ../../eeppj-carousel.zip eeppj-carousel/
+          COMPONENT="${{ steps.tag.outputs.component }}"
+          VERSION="${{ steps.tag.outputs.version }}"
+
+          case "$COMPONENT" in
+            theme)
+              FILE_VER=$(grep -oP 'Version:\s*\K[0-9.]+' wp-content/themes/eeppj/style.css)
+              if [ "$FILE_VER" != "$VERSION" ]; then
+                echo "::error::Tag version ($VERSION) ≠ style.css Version ($FILE_VER). Bump the version first."
+                exit 1
+              fi
+              ;;
+            pqrrs)
+              FILE_VER=$(grep -oP "Version:\s*\K[0-9.]+" wp-content/plugins/eeppj-pqrrs/eeppj-pqrrs.php)
+              CONST_VER=$(grep -oP "EEPPJ_PQRRS_VERSION',\s*'\K[0-9.]+" wp-content/plugins/eeppj-pqrrs/eeppj-pqrrs.php)
+              if [ "$FILE_VER" != "$VERSION" ]; then
+                echo "::error::Tag ($VERSION) ≠ plugin header ($FILE_VER)"
+                exit 1
+              fi
+              if [ "$CONST_VER" != "$VERSION" ]; then
+                echo "::error::Tag ($VERSION) ≠ EEPPJ_PQRRS_VERSION ($CONST_VER)"
+                exit 1
+              fi
+              ;;
+            carousel)
+              FILE_VER=$(grep -oP "Version:\s*\K[0-9.]+" wp-content/plugins/eeppj-carousel/eeppj-carousel.php)
+              CONST_VER=$(grep -oP "EEPPJ_CAROUSEL_VERSION',\s*'\K[0-9.]+" wp-content/plugins/eeppj-carousel/eeppj-carousel.php)
+              if [ "$FILE_VER" != "$VERSION" ]; then
+                echo "::error::Tag ($VERSION) ≠ plugin header ($FILE_VER)"
+                exit 1
+              fi
+              if [ "$CONST_VER" != "$VERSION" ]; then
+                echo "::error::Tag ($VERSION) ≠ EEPPJ_CAROUSEL_VERSION ($CONST_VER)"
+                exit 1
+              fi
+              ;;
+          esac
+          echo "Version validated: $VERSION"
+
+      - name: Build ZIP
+        run: |
+          case "${{ steps.tag.outputs.component }}" in
+            theme)    cd wp-content/themes  && zip -r ../../eeppj-theme.zip eeppj/ ;;
+            pqrrs)    cd wp-content/plugins && zip -r ../../eeppj-pqrrs.zip eeppj-pqrrs/ ;;
+            carousel) cd wp-content/plugins && zip -r ../../eeppj-carousel.zip eeppj-carousel/ ;;
+          esac
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          name: "${{ steps.tag.outputs.component }} v${{ steps.tag.outputs.version }}"
           generate_release_notes: true
-          files: |
-            eeppj-theme.zip
-            eeppj-pqrrs.zip
-            eeppj-carousel.zip
+          files: "${{ steps.tag.outputs.zip }}"

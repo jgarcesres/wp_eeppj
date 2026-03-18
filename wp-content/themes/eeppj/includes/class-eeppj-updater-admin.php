@@ -75,8 +75,8 @@ class EEPPJ_Updater_Admin {
         return !empty($data['Version']) ? $data['Version'] : null;
     }
 
-    private function get_latest_release_info($component, $force_refresh = false) {
-        $transient_key = 'eeppj_gh_update_' . md5($component['slug']);
+    private function get_all_releases($force_refresh = false) {
+        $transient_key = 'eeppj_gh_releases_list';
 
         if (!$force_refresh) {
             $cached = get_transient($transient_key);
@@ -85,7 +85,7 @@ class EEPPJ_Updater_Admin {
             }
         }
 
-        $url = 'https://api.github.com/repos/jgarcesres/wp_eeppj/releases/latest';
+        $url = 'https://api.github.com/repos/jgarcesres/wp_eeppj/releases?per_page=15';
         $response = wp_remote_get($url, array(
             'timeout' => 10,
             'headers' => array(
@@ -99,12 +99,33 @@ class EEPPJ_Updater_Admin {
         }
 
         $data = json_decode(wp_remote_retrieve_body($response), true);
-        if (!is_array($data) || empty($data['tag_name'])) {
+        if (!is_array($data)) {
             return null;
         }
 
         set_transient($transient_key, $data, 21600);
         return $data;
+    }
+
+    private function get_latest_release_info($component, $force_refresh = false) {
+        $releases = $this->get_all_releases($force_refresh);
+        if (!$releases) {
+            return null;
+        }
+
+        // Find the most recent release containing this component's asset
+        foreach ($releases as $release) {
+            if (empty($release['tag_name']) || empty($release['assets'])) {
+                continue;
+            }
+            foreach ($release['assets'] as $asset) {
+                if (isset($asset['name']) && $asset['name'] === $component['asset']) {
+                    return $release;
+                }
+            }
+        }
+
+        return null;
     }
 
     private function parse_version($release) {
@@ -145,18 +166,18 @@ class EEPPJ_Updater_Admin {
 
         // Only clear transients when explicitly forced
         if ($force) {
+            delete_transient('eeppj_gh_releases_list');
             foreach ($this->components as $c) {
                 delete_transient('eeppj_gh_update_' . md5($c['slug']));
             }
         }
 
-        // Fetch release data (uses cache unless forced)
-        $release = $this->get_latest_release_info($this->components[0], $force);
-        $remote_version = $release ? $this->parse_version($release) : null;
-
+        // Each component finds its own latest release
         $results = array();
         foreach ($this->components as $c) {
             $current = call_user_func($c['version_cb'], $c);
+            $release = $this->get_latest_release_info($c, $force);
+            $remote_version = $release ? $this->parse_version($release) : null;
             $has_asset = $release ? ($this->get_asset_url($release, $c['asset']) !== null) : false;
             $update_available = ($current && $remote_version && $has_asset)
                 ? version_compare($remote_version, $current, '>')
@@ -169,6 +190,7 @@ class EEPPJ_Updater_Admin {
                 'installed'        => $current,
                 'is_installed'     => $current !== null,
                 'remote'           => $remote_version,
+                'release_url'      => $release ? esc_url($release['html_url']) : null,
                 'update_available' => $update_available,
                 'has_asset'        => $has_asset,
             );
@@ -176,9 +198,6 @@ class EEPPJ_Updater_Admin {
 
         wp_send_json_success(array(
             'components'     => $results,
-            'release_url'    => $release ? esc_url($release['html_url']) : null,
-            'release_name'   => $release ? ($release['name'] ? $release['name'] : $release['tag_name']) : null,
-            'published_at'   => $release ? $release['published_at'] : null,
         ));
     }
 
@@ -297,9 +316,6 @@ class EEPPJ_Updater_Admin {
                 </button>
                 <span id="eeppj-check-spinner" class="spinner" style="float: none; margin-top: 0;"></span>
 
-                <div id="eeppj-release-info" style="display:none; margin-bottom: 16px; padding: 10px 14px; background: #f0f0f1; border-left: 4px solid #2271b1; border-radius: 2px;">
-                </div>
-
                 <table class="widefat striped" id="eeppj-components-table" style="display: none;">
                     <thead>
                         <tr>
@@ -362,30 +378,22 @@ class EEPPJ_Updater_Admin {
 
                     var d = res.data;
 
-                    // Release info
-                    if (d.release_name) {
-                        var date = d.published_at ? new Date(d.published_at).toLocaleDateString('es-CO') : '';
-                        var $info = $('#eeppj-release-info').empty();
-                        $info.append($('<strong>').text('Último release: '));
-                        $info.append(document.createTextNode(d.release_name));
-                        if (date) {
-                            $info.append(document.createTextNode(' — ' + date));
-                        }
-                        if (d.release_url) {
-                            $info.append(document.createTextNode(' — '));
-                            $info.append($('<a>').attr({ href: d.release_url, target: '_blank', rel: 'noopener noreferrer' }).text('Ver en GitHub ↗'));
-                        }
-                        $info.show();
-                    }
-
-                    // Components table
+                    // Components table — each row tracks its own release
                     var $tbody = $('#eeppj-components-body').empty();
                     $.each(d.components, function(i, c) {
                         var $tr = $('<tr>');
-                        $tr.append($('<td>').append($('<strong>').text(c.name)));
+
+                        // Name + release link
+                        var $nameCell = $('<td>').append($('<strong>').text(c.name));
+                        if (c.release_url) {
+                            $nameCell.append(document.createTextNode(' '));
+                            $nameCell.append($('<a>').attr({ href: c.release_url, target: '_blank', rel: 'noopener noreferrer' }).css('fontSize', '12px').text('(release ↗)'));
+                        }
+                        $tr.append($nameCell);
+
                         $tr.append($('<td>').text(c.type === 'theme' ? 'Tema' : 'Plugin'));
                         $tr.append($('<td>').append($('<code>').text(c.is_installed ? c.installed : 'No instalado')));
-                        $tr.append($('<td>').append($('<code>').text(c.remote || 'Desconocida')));
+                        $tr.append($('<td>').append($('<code>').text(c.remote || '—')));
 
                         var $status = $('<td>');
                         var $action = $('<td>');

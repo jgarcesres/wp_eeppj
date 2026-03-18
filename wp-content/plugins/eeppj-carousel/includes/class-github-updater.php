@@ -211,8 +211,10 @@ class EEPPJ_Carousel_GitHub_Updater {
             return $cached;
         }
 
+        // Scan recent releases to find the latest one containing our asset.
+        // Each component releases independently with its own tag prefix.
         $url = sprintf(
-            'https://api.github.com/repos/%s/releases/latest',
+            'https://api.github.com/repos/%s/releases?per_page=10',
             $this->github_repo
         );
 
@@ -234,15 +236,26 @@ class EEPPJ_Carousel_GitHub_Updater {
         }
 
         $body = wp_remote_retrieve_body($response);
-        $data = json_decode($body, true);
+        $releases = json_decode($body, true);
 
-        if (!is_array($data) || empty($data['tag_name'])) {
+        if (!is_array($releases)) {
             return null;
         }
 
-        set_transient($this->transient_key, $data, $this->cache_duration);
+        // Find the most recent release that has our asset ZIP attached.
+        foreach ($releases as $release) {
+            if (empty($release['tag_name']) || empty($release['assets'])) {
+                continue;
+            }
+            foreach ($release['assets'] as $asset) {
+                if (isset($asset['name']) && $asset['name'] === $this->asset_name) {
+                    set_transient($this->transient_key, $release, $this->cache_duration);
+                    return $release;
+                }
+            }
+        }
 
-        return $data;
+        return null;
     }
 
     /**

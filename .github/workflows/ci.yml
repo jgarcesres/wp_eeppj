@@ -25,10 +25,46 @@ jobs:
             ! grep -q 'Parse error' /tmp/lint.log
             "
 
+  # ─── Tier 1a-ii: Version consistency ───
+  version-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check version consistency across components
+        run: |
+          FAIL=0
+
+          # PQRRS: header Version must match EEPPJ_PQRRS_VERSION constant
+          PQRRS_HDR=$(grep -oP "Version:\s*\K[0-9.]+" wp-content/plugins/eeppj-pqrrs/eeppj-pqrrs.php)
+          PQRRS_DEF=$(grep -oP "EEPPJ_PQRRS_VERSION',\s*'\K[0-9.]+" wp-content/plugins/eeppj-pqrrs/eeppj-pqrrs.php)
+          if [ "$PQRRS_HDR" != "$PQRRS_DEF" ]; then
+            echo "::error::PQRRS header Version ($PQRRS_HDR) ≠ EEPPJ_PQRRS_VERSION ($PQRRS_DEF)"
+            FAIL=1
+          else
+            echo "✓ PQRRS: $PQRRS_HDR"
+          fi
+
+          # Carousel: header Version must match EEPPJ_CAROUSEL_VERSION constant
+          CARO_HDR=$(grep -oP "Version:\s*\K[0-9.]+" wp-content/plugins/eeppj-carousel/eeppj-carousel.php)
+          CARO_DEF=$(grep -oP "EEPPJ_CAROUSEL_VERSION',\s*'\K[0-9.]+" wp-content/plugins/eeppj-carousel/eeppj-carousel.php)
+          if [ "$CARO_HDR" != "$CARO_DEF" ]; then
+            echo "::error::Carousel header Version ($CARO_HDR) ≠ EEPPJ_CAROUSEL_VERSION ($CARO_DEF)"
+            FAIL=1
+          else
+            echo "✓ Carousel: $CARO_HDR"
+          fi
+
+          # Theme: just report (no constant to cross-check)
+          THEME_VER=$(grep -oP 'Version:\s*\K[0-9.]+' wp-content/themes/eeppj/style.css)
+          echo "✓ Theme: $THEME_VER"
+
+          exit $FAIL
+
   # ─── Tier 1b + 2: Smoke test + Visual regression ───
   smoke-and-visual:
     runs-on: ubuntu-latest
-    needs: lint
+    needs: [lint, version-check]
     steps:
       - uses: actions/checkout@v6
 
