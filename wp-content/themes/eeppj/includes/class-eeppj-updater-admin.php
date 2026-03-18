@@ -133,6 +133,11 @@ class EEPPJ_Updater_Admin {
             return null;
         }
         $v = $release['tag_name'];
+        // Strip component prefix (e.g. 'carousel/v1.4.0' → 'v1.4.0').
+        $slash = strrpos($v, '/');
+        if ($slash !== false) {
+            $v = substr($v, $slash + 1);
+        }
         if (strpos($v, 'v') === 0 || strpos($v, 'V') === 0) {
             $v = substr($v, 1);
         }

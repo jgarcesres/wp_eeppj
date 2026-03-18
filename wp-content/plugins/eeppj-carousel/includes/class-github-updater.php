@@ -273,6 +273,12 @@ class EEPPJ_Carousel_GitHub_Updater {
 
         $version = $release['tag_name'];
 
+        // Strip component prefix (e.g. 'carousel/v1.4.0' → 'v1.4.0').
+        $slash = strrpos($version, '/');
+        if ($slash !== false) {
+            $version = substr($version, $slash + 1);
+        }
+
         // Strip leading 'v' or 'V'.
         if (strpos($version, 'v') === 0 || strpos($version, 'V') === 0) {
             $version = substr($version, 1);

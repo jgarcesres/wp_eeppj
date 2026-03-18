@@ -273,6 +273,12 @@ class EEPPJ_Theme_GitHub_Updater {
 
         $version = $release['tag_name'];
 
+        // Strip component prefix (e.g. 'theme/v1.3.0' → 'v1.3.0').
+        $slash = strrpos($version, '/');
+        if ($slash !== false) {
+            $version = substr($version, $slash + 1);
+        }
+
         // Strip leading 'v' or 'V'.
         if (strpos($version, 'v') === 0 || strpos($version, 'V') === 0) {
             $version = substr($version, 1);
