@@ -104,7 +104,10 @@ function eeppj_carousel_render($attributes) {
     $autoplay = (int) ($attributes['autoplayDuration'] ?? 5000);
     $show_play_pause = $attributes['showPlayPause'] ?? true;
     $block_id = !empty($attributes['blockId']) ? $attributes['blockId'] : 'eeppj-carousel-' . wp_unique_id();
-    $theme = isset($attributes['theme']) ? $attributes['theme'] : 'dark';
+    $allowed_themes = array('dark', 'light');
+    $theme = isset($attributes['theme']) && in_array($attributes['theme'], $allowed_themes, true)
+        ? $attributes['theme']
+        : 'dark';
     $theme_class = ($theme === 'light') ? ' eeppj-carousel--light' : '';
 
     if (empty($slides)) {
