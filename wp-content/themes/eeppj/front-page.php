@@ -178,6 +178,15 @@ $recent_posts = new WP_Query([
   </div>
 </section>
 
+<!-- ====== FEATURED CAROUSEL ====== -->
+<?php if (is_active_sidebar('homepage-carousel')) : ?>
+<section class="homepage-featured" style="padding-top: 4rem; padding-bottom: 4rem; background-color: #000;">
+  <div class="max-w-7xl px-4 sm\:px-6" style="margin-left: auto; margin-right: auto;">
+    <?php dynamic_sidebar('homepage-carousel'); ?>
+  </div>
+</section>
+<?php endif; ?>
+
 <!-- ====== RECENT NEWS ====== -->
 <section style="padding-top: 4rem; padding-bottom: 6rem; background-color: var(--color-surface-muted);">
   <div class="max-w-7xl px-4 sm\:px-6" style="margin-left: auto; margin-right: auto;">
@@ -283,5 +292,17 @@ $recent_posts = new WP_Query([
     .news-grid { grid-template-columns: repeat(3, 1fr); }
   }
 </style>
+
+<script>
+(function() {
+  var el = document.querySelector('.homepage-featured');
+  if (!el) return;
+  if (!('IntersectionObserver' in window)) { el.classList.add('is-visible'); return; }
+  var observer = new IntersectionObserver(function(entries) {
+    if (entries[0].isIntersecting) { el.classList.add('is-visible'); observer.disconnect(); }
+  }, { threshold: 0.15 });
+  observer.observe(el);
+})();
+</script>
 
 <?php get_footer(); ?>

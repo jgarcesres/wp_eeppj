@@ -329,6 +329,16 @@ function eeppj_widgets_init() {
         'before_title'  => '<h3 class="text-white font-heading font-bold text-lg mb-4">',
         'after_title'   => '</h3>',
     ]);
+
+    register_sidebar([
+        'name'          => __('Destacados Homepage', 'eeppj'),
+        'id'            => 'homepage-carousel',
+        'description'   => __('Carrusel o contenido destacado en la página principal. Aparece entre las estadísticas y las noticias.', 'eeppj'),
+        'before_widget' => '<div class="widget homepage-carousel-widget %2$s">',
+        'after_widget'  => '</div>',
+        'before_title'  => '',
+        'after_title'   => '',
+    ]);
 }
 add_action('widgets_init', 'eeppj_widgets_init');
 

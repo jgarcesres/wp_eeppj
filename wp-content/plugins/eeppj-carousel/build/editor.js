@@ -18,6 +18,7 @@
   var RangeControl = wp.components.RangeControl;
   var ToggleControl = wp.components.ToggleControl;
   var Button = wp.components.Button;
+  var SelectControl = wp.components.SelectControl;
   var Placeholder = wp.components.Placeholder;
 
   registerBlockType('eeppj/carousel', {
@@ -31,6 +32,7 @@
       autoplayDuration: { type: 'number', default: 5000 },
       showPlayPause: { type: 'boolean', default: true },
       blockId: { type: 'string', default: '' },
+      theme: { type: 'string', default: 'dark' },
     },
     supports: {
       align: ['wide', 'full'],
@@ -109,6 +111,15 @@
             label: 'Mostrar botón Play/Pausa',
             checked: attributes.showPlayPause,
             onChange: function (v) { setAttributes({ showPlayPause: v }); },
+          }),
+          el(SelectControl, {
+            label: 'Tema',
+            value: attributes.theme || 'dark',
+            options: [
+              { label: 'Oscuro', value: 'dark' },
+              { label: 'Claro', value: 'light' },
+            ],
+            onChange: function (v) { setAttributes({ theme: v }); },
           })
         )
       );

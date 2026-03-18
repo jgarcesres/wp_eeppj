@@ -2,7 +2,7 @@
 /**
  * Plugin Name: EEPPJ Carousel
  * Description: Apple-style premium content carousel — Gutenberg block with autoplay, smooth transitions, and floating control bar.
- * Version: 1.4.1
+ * Version: 1.5.0
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: EEPPJ
@@ -12,7 +12,7 @@
 
 defined('ABSPATH') || exit;
 
-define('EEPPJ_CAROUSEL_VERSION', '1.4.1');
+define('EEPPJ_CAROUSEL_VERSION', '1.5.0');
 define('EEPPJ_CAROUSEL_PATH', plugin_dir_path(__FILE__));
 define('EEPPJ_CAROUSEL_URL', plugin_dir_url(__FILE__));
 
@@ -77,6 +77,10 @@ function eeppj_carousel_register_block() {
                 'type'    => 'string',
                 'default' => '',
             ],
+            'theme' => [
+                'type'    => 'string',
+                'default' => 'dark',
+            ],
         ],
     ]);
 }
@@ -100,6 +104,8 @@ function eeppj_carousel_render($attributes) {
     $autoplay = (int) ($attributes['autoplayDuration'] ?? 5000);
     $show_play_pause = $attributes['showPlayPause'] ?? true;
     $block_id = !empty($attributes['blockId']) ? $attributes['blockId'] : 'eeppj-carousel-' . wp_unique_id();
+    $theme = isset($attributes['theme']) ? $attributes['theme'] : 'dark';
+    $theme_class = ($theme === 'light') ? ' eeppj-carousel--light' : '';
 
     if (empty($slides)) {
         return '';
@@ -109,7 +115,7 @@ function eeppj_carousel_render($attributes) {
 
     ob_start();
     ?>
-    <div class="eeppj-carousel"
+    <div class="eeppj-carousel<?php echo esc_attr($theme_class); ?>"
          id="<?php echo esc_attr($block_id); ?>"
          data-autoplay="<?php echo esc_attr($autoplay); ?>"
          data-show-controls="<?php echo $show_play_pause ? '1' : '0'; ?>"
