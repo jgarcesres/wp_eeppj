@@ -50,7 +50,7 @@ class EEPPJ_PQRRS_Reports {
         if (!current_user_can('manage_options')) return;
 
         $mes = sanitize_text_field($_GET['mes'] ?? '');
-        if ($mes && preg_match('/^\d{4}-\d{2}$/', $mes)) {
+        if ($mes && preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $mes)) {
             self::render_month_detail($mes);
         } else {
             self::render_summary();
@@ -75,9 +75,14 @@ class EEPPJ_PQRRS_Reports {
         $desde = sanitize_text_field($_GET['desde'] ?? $default_desde);
         $hasta = sanitize_text_field($_GET['hasta'] ?? $default_hasta);
 
-        // Validate format
-        if (!preg_match('/^\d{4}-\d{2}$/', $desde)) $desde = $default_desde;
-        if (!preg_match('/^\d{4}-\d{2}$/', $hasta)) $hasta = $default_hasta;
+        // Validate format (only valid months 01-12)
+        if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $desde)) $desde = $default_desde;
+        if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $hasta)) $hasta = $default_hasta;
+
+        // Auto-swap if inverted
+        if ($desde > $hasta) {
+            list($desde, $hasta) = array($hasta, $desde);
+        }
 
         $date_start = $desde . '-01';
         // End of "hasta" month: first day of next month
@@ -92,6 +97,11 @@ class EEPPJ_PQRRS_Reports {
              ORDER BY mes DESC",
             $date_start, $date_end
         ));
+
+        if ($wpdb->last_error) {
+            echo '<div class="notice notice-error"><p>' . esc_html('Error de base de datos: ' . $wpdb->last_error) . '</p></div>';
+            return;
+        }
 
         // Build lookup: $data[month][tipo] = count
         $data = [];
@@ -222,6 +232,11 @@ class EEPPJ_PQRRS_Reports {
             $date_start, $date_end
         ), OBJECT_K);
 
+        if ($wpdb->last_error) {
+            echo '<div class="wrap eeppj-admin"><div class="notice notice-error"><p>' . esc_html('Error de base de datos: ' . $wpdb->last_error) . '</p></div></div>';
+            return;
+        }
+
         // Build WHERE for filtered list
         $where_parts = [
             $wpdb->prepare("created_at >= %s", $date_start),
@@ -320,7 +335,9 @@ class EEPPJ_PQRRS_Reports {
                 <tr><td colspan="7" style="text-align:center;color:#666;">No hay solicitudes en este período.</td></tr>
               <?php endif; ?>
               <?php foreach ($submissions as $s) :
-                  $st = self::$statuses[$s->status] ?? self::$statuses['pendiente'];
+                  $st = isset(self::$statuses[$s->status])
+                      ? self::$statuses[$s->status]
+                      : ['label' => ucfirst($s->status), 'color' => '#9ca3af', 'bg' => '#f9fafb'];
               ?>
                 <tr>
                   <td><code><?php echo esc_html($s->submission_id); ?></code></td>
@@ -381,12 +398,16 @@ class EEPPJ_PQRRS_Reports {
         $desde = sanitize_text_field($_GET['desde'] ?? date('Y-m', strtotime('-11 months')));
         $hasta = sanitize_text_field($_GET['hasta'] ?? date('Y-m'));
 
-        if (!preg_match('/^\d{4}-\d{2}$/', $desde) || !preg_match('/^\d{4}-\d{2}$/', $hasta)) {
+        if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $desde) || !preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $hasta)) {
             wp_die('Parámetros inválidos.');
         }
 
         $date_start = $desde . '-01';
         $date_end = date('Y-m-01', strtotime($hasta . '-01 +1 month'));
+
+        if ($desde > $hasta) {
+            list($desde, $hasta) = array($hasta, $desde);
+        }
 
         $rows = $wpdb->get_results($wpdb->prepare(
             "SELECT DATE_FORMAT(created_at, '%%Y-%%m') AS mes, tipo, COUNT(*) AS total
@@ -396,6 +417,10 @@ class EEPPJ_PQRRS_Reports {
              ORDER BY mes DESC",
             $date_start, $date_end
         ));
+
+        if ($wpdb->last_error) {
+            wp_die('Error de base de datos: ' . esc_html($wpdb->last_error), 500);
+        }
 
         $data = [];
         foreach ($rows as $r) {
@@ -415,6 +440,9 @@ class EEPPJ_PQRRS_Reports {
         self::send_csv_headers($filename);
 
         $out = fopen('php://output', 'w');
+        if ($out === false) {
+            wp_die('Error interno al generar el archivo CSV.', 500);
+        }
         // UTF-8 BOM
         fwrite($out, "\xEF\xBB\xBF");
 
@@ -438,7 +466,7 @@ class EEPPJ_PQRRS_Reports {
 
     private static function export_detail_csv($wpdb, $table) {
         $mes = sanitize_text_field($_GET['mes'] ?? '');
-        if (!preg_match('/^\d{4}-\d{2}$/', $mes)) {
+        if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $mes)) {
             wp_die('Parámetros inválidos.');
         }
 
@@ -453,10 +481,17 @@ class EEPPJ_PQRRS_Reports {
             $date_start, $date_end
         ));
 
+        if ($wpdb->last_error) {
+            wp_die('Error de base de datos: ' . esc_html($wpdb->last_error), 500);
+        }
+
         $filename = 'pqrrs-detalle-' . $mes . '.csv';
         self::send_csv_headers($filename);
 
         $out = fopen('php://output', 'w');
+        if ($out === false) {
+            wp_die('Error interno al generar el archivo CSV.', 500);
+        }
         // UTF-8 BOM
         fwrite($out, "\xEF\xBB\xBF");
 
@@ -488,6 +523,7 @@ class EEPPJ_PQRRS_Reports {
         $filename = sanitize_file_name($filename);
         header('Content-Type: text/csv; charset=UTF-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
         header('Pragma: no-cache');
         header('Expires: 0');
     }
