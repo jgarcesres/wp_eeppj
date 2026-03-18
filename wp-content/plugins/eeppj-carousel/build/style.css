@@ -4,7 +4,7 @@
    Aesthetic: Ultra-clean, generous whitespace, glass-morphism controls
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap');
+/* DM Sans is loaded by the theme — no separate @import needed here */
 
 /* === Container === */
 .eeppj-carousel {
@@ -193,15 +193,17 @@
   to   { width: 100%; }
 }
 
-/* Running: animate from 0% to 100%, pausable via animation-play-state */
-.eeppj-carousel__dot.is-active.is-running::after {
+/* Active dot with progress: shared animation, controlled via play-state */
+.eeppj-carousel__dot.is-active.is-running::after,
+.eeppj-carousel__dot.is-active.is-paused::after {
   animation: eeppj-progress-fill var(--progress-duration, 5s) linear forwards;
+}
+
+.eeppj-carousel__dot.is-active.is-running::after {
   animation-play-state: running;
 }
 
-/* Paused: freeze the animation in place */
 .eeppj-carousel__dot.is-active.is-paused::after {
-  animation: eeppj-progress-fill var(--progress-duration, 5s) linear forwards;
   animation-play-state: paused;
 }
 

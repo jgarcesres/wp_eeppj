@@ -19,8 +19,9 @@
     var current = 0;
     var isPlaying = true;
     var advanceTimer = null;
+    var transitionTimer = null;
+    var startProgressTimer = null;
     var isTransitioning = false;
-    var progressStart = 0;
     var pausedElapsed = 0;
     var isHovering = false;
 
@@ -30,68 +31,74 @@
 
     el.style.setProperty('--progress-duration', autoplayMs + 'ms');
 
+    function getActiveDot() {
+      return dots[current] || null;
+    }
+
     function startProgress() {
-      var activeDot = dots[current];
+      var activeDot = getActiveDot();
       if (!activeDot) return;
 
-      // Fresh start: reset animation and apply running state
       activeDot.classList.remove('is-running', 'is-paused');
-      activeDot.style.setProperty('--progress-duration', autoplayMs + 'ms');
-      void activeDot.offsetWidth; // force reflow to restart animation
+      void activeDot.offsetWidth;
       activeDot.classList.add('is-running');
 
-      progressStart = performance.now();
       pausedElapsed = 0;
       scheduleAdvance(autoplayMs);
     }
 
     function pauseProgress() {
-      var activeDot = dots[current];
-      if (!activeDot) return;
+      var activeDot = getActiveDot();
+      if (!activeDot || !activeDot.classList.contains('is-running')) return;
 
       cancelAdvance();
+      activeDot.classList.remove('is-running');
+      activeDot.classList.add('is-paused');
 
-      // Switch from running to paused — CSS animation-play-state freezes in place
-      if (activeDot.classList.contains('is-running')) {
-        activeDot.classList.remove('is-running');
-        activeDot.classList.add('is-paused');
-        pausedElapsed = performance.now() - progressStart;
-        if (pausedElapsed > autoplayMs) pausedElapsed = autoplayMs;
-      }
+      // Estimate elapsed from timer scheduling (avoids needing progressStart)
+      pausedElapsed = autoplayMs - getRemainingTime();
     }
 
     function resumeProgress() {
-      var activeDot = dots[current];
-      if (!activeDot) return;
+      var activeDot = getActiveDot();
+      if (!activeDot || !activeDot.classList.contains('is-paused')) return;
 
-      // Switch from paused back to running — CSS animation-play-state resumes
-      if (activeDot.classList.contains('is-paused')) {
-        activeDot.classList.remove('is-paused');
-        activeDot.classList.add('is-running');
+      activeDot.classList.remove('is-paused');
+      activeDot.classList.add('is-running');
 
-        var remaining = autoplayMs - pausedElapsed;
-        if (remaining <= 0) {
-          advance();
-          return;
-        }
-        progressStart = performance.now() - pausedElapsed;
-        scheduleAdvance(remaining);
+      var remaining = autoplayMs - pausedElapsed;
+      if (remaining <= 0) {
+        advance();
+        return;
       }
+      scheduleAdvance(remaining);
     }
 
     function resetProgress() {
       cancelAdvance();
+      cancelDeferred();
       dots.forEach(function (dot) {
         dot.classList.remove('is-running', 'is-paused');
       });
       pausedElapsed = 0;
     }
 
+    var advanceScheduledAt = 0;
+    var advanceDuration = 0;
+
+    function getRemainingTime() {
+      if (!advanceTimer) return 0;
+      var elapsed = performance.now() - advanceScheduledAt;
+      return Math.max(0, advanceDuration - elapsed);
+    }
+
     function scheduleAdvance(ms) {
       cancelAdvance();
+      advanceScheduledAt = performance.now();
+      advanceDuration = ms;
       advanceTimer = setTimeout(function () {
         advanceTimer = null;
-        advance();
+        goTo(current + 1);
       }, ms);
     }
 
@@ -102,16 +109,25 @@
       }
     }
 
-    function advance() {
-      goTo(current + 1);
+    function cancelDeferred() {
+      if (transitionTimer) {
+        clearTimeout(transitionTimer);
+        transitionTimer = null;
+      }
+      if (startProgressTimer) {
+        clearTimeout(startProgressTimer);
+        startProgressTimer = null;
+      }
     }
 
     function goTo(index) {
-      if (isTransitioning && index !== current) return;
+      var target = ((index % slideCount) + slideCount) % slideCount;
+      if (target === current && !isTransitioning) return;
+      if (isTransitioning && target !== current) return;
 
       resetProgress();
 
-      current = ((index % slideCount) + slideCount) % slideCount;
+      current = target;
       isTransitioning = true;
 
       track.style.transform = 'translateX(-' + (current * (100 / slideCount)) + '%)';
@@ -130,12 +146,14 @@
         }
       }
 
-      setTimeout(function () {
+      transitionTimer = setTimeout(function () {
+        transitionTimer = null;
         isTransitioning = false;
       }, 650);
 
       if (isPlaying && !isHovering) {
-        setTimeout(function () {
+        startProgressTimer = setTimeout(function () {
+          startProgressTimer = null;
           startProgress();
         }, 50);
       }
@@ -154,10 +172,6 @@
       }
     }
 
-    function togglePlay() {
-      setPlayState(!isPlaying);
-    }
-
     // Dot clicks
     dots.forEach(function (dot) {
       dot.addEventListener('click', function () {
@@ -167,7 +181,9 @@
 
     // Play/pause button
     if (playPauseBtn) {
-      playPauseBtn.addEventListener('click', togglePlay);
+      playPauseBtn.addEventListener('click', function () {
+        setPlayState(!isPlaying);
+      });
     }
 
     // Touch
@@ -192,7 +208,7 @@
         goTo(current - 1);
       } else if (e.key === ' ') {
         e.preventDefault();
-        togglePlay();
+        setPlayState(!isPlaying);
       }
     });
 
@@ -211,21 +227,17 @@
       }
     });
 
-    // Visibility: pause when tab hidden
-    document.addEventListener('visibilitychange', function () {
+    // Visibility: pause when tab hidden (scoped to this carousel)
+    function onVisibilityChange() {
       if (document.hidden) {
-        if (isPlaying) {
-          pauseProgress();
-        }
+        if (isPlaying) pauseProgress();
       } else if (isPlaying && !isHovering) {
         resumeProgress();
       }
-    });
-
-    // Init
-    goTo(0);
-    if (isPlaying) {
-      startProgress();
     }
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    // Init — goTo starts progress via deferred setTimeout, no double call
+    goTo(0);
   }
 })();
