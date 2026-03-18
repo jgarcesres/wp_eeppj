@@ -34,7 +34,8 @@
 }
 
 /* ====== Homepage featured section scroll-reveal ====== */
-.homepage-featured {
+/* Visible by default; JS adds .has-reveal then .is-visible for animation */
+.homepage-featured.has-reveal {
   opacity: 0;
   transform: translateY(2rem);
   transition: opacity 0.8s ease, transform 0.8s ease;
@@ -49,7 +50,7 @@
   .hero-fade,
   .quick-card,
   .service-card,
-  .homepage-featured {
+  .homepage-featured.has-reveal {
     opacity: 1;
     transform: none;
     animation: none;

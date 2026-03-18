@@ -301,6 +301,7 @@ $recent_posts = new WP_Query([
 (function() {
   var el = document.querySelector('.homepage-featured');
   if (!el) return;
+  el.classList.add('has-reveal');
   if (!('IntersectionObserver' in window)) { el.classList.add('is-visible'); return; }
   try {
     var observer = new IntersectionObserver(function(entries) {
