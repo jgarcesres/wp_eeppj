@@ -1,0 +1,151 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/theme.json",
+  "version": 3,
+  "settings": {
+    "color": {
+      "palette": [
+        { "slug": "brand-green", "color": "#8cc04b", "name": "Verde EEPPJ" },
+        { "slug": "brand-green-light", "color": "#acc46b", "name": "Verde Claro" },
+        { "slug": "brand-green-dark", "color": "#6a9a35", "name": "Verde Oscuro" },
+        { "slug": "brand-blue", "color": "#3182ce", "name": "Azul EEPPJ" },
+        { "slug": "brand-blue-dark", "color": "#1e4b75", "name": "Azul Oscuro" },
+        { "slug": "brand-blue-light", "color": "#4299e1", "name": "Azul Claro" },
+        { "slug": "brand-red", "color": "#bc2529", "name": "Rojo EEPPJ" },
+        { "slug": "surface", "color": "#ffffff", "name": "Blanco" },
+        { "slug": "surface-muted", "color": "#f7fafc", "name": "Gris Suave" },
+        { "slug": "surface-subtle", "color": "#edf2f7", "name": "Gris Claro" },
+        { "slug": "text", "color": "#2d3748", "name": "Texto" },
+        { "slug": "text-muted", "color": "#686868", "name": "Texto Secundario" },
+        { "slug": "footer", "color": "#212121", "name": "Fondo Pie de Página" }
+      ],
+      "gradients": [
+        {
+          "slug": "hero-overlay",
+          "gradient": "linear-gradient(to right, rgba(30,75,117,0.9), rgba(30,75,117,0.7), rgba(30,75,117,0.4))",
+          "name": "Hero Overlay"
+        },
+        {
+          "slug": "brand-blue-gradient",
+          "gradient": "linear-gradient(to bottom right, #1e4b75, #3182ce, #4299e1)",
+          "name": "Degradado Azul"
+        },
+        {
+          "slug": "green-subtle",
+          "gradient": "linear-gradient(to bottom right, rgba(140,192,75,0.08), rgba(49,130,206,0.05), rgba(140,192,75,0.1))",
+          "name": "Verde Sutil"
+        }
+      ],
+      "defaultPalette": false,
+      "defaultGradients": false
+    },
+    "typography": {
+      "fontFamilies": [
+        {
+          "slug": "dm-sans",
+          "name": "DM Sans",
+          "fontFamily": "'DM Sans', system-ui, -apple-system, sans-serif"
+        },
+        {
+          "slug": "montserrat",
+          "name": "Montserrat",
+          "fontFamily": "'Montserrat', system-ui, sans-serif"
+        }
+      ],
+      "fontSizes": [
+        { "slug": "small", "size": "0.875rem", "name": "Pequeño" },
+        { "slug": "medium", "size": "1rem", "name": "Normal" },
+        { "slug": "large", "size": "1.125rem", "name": "Grande" },
+        { "slug": "x-large", "size": "1.5rem", "name": "Extra Grande" },
+        { "slug": "xx-large", "size": "1.875rem", "name": "Título" },
+        { "slug": "huge", "size": "2.25rem", "name": "Título Grande" }
+      ],
+      "defaultFontSizes": false
+    },
+    "spacing": {
+      "units": ["px", "rem", "%"],
+      "spacingSizes": [
+        { "slug": "10", "size": "0.25rem", "name": "3XS" },
+        { "slug": "20", "size": "0.5rem", "name": "2XS" },
+        { "slug": "30", "size": "0.75rem", "name": "XS" },
+        { "slug": "40", "size": "1rem", "name": "S" },
+        { "slug": "50", "size": "1.5rem", "name": "M" },
+        { "slug": "60", "size": "2rem", "name": "L" },
+        { "slug": "70", "size": "3rem", "name": "XL" },
+        { "slug": "80", "size": "4rem", "name": "2XL" }
+      ]
+    },
+    "layout": {
+      "contentSize": "56rem",
+      "wideSize": "80rem"
+    },
+    "appearanceTools": true,
+    "useRootPaddingAwareAlignments": true
+  },
+  "styles": {
+    "color": {
+      "background": "#ffffff",
+      "text": "#2d3748"
+    },
+    "typography": {
+      "fontFamily": "'DM Sans', system-ui, -apple-system, sans-serif",
+      "lineHeight": "1.6"
+    },
+    "elements": {
+      "heading": {
+        "typography": {
+          "fontFamily": "'Montserrat', system-ui, sans-serif",
+          "fontWeight": "700"
+        },
+        "color": {
+          "text": "#1e4b75"
+        }
+      },
+      "link": {
+        "color": {
+          "text": "#3182ce"
+        },
+        ":hover": {
+          "color": {
+            "text": "#1e4b75"
+          }
+        }
+      },
+      "button": {
+        "color": {
+          "background": "#8cc04b",
+          "text": "#ffffff"
+        },
+        "typography": {
+          "fontWeight": "600"
+        },
+        "border": {
+          "radius": "0.5rem"
+        },
+        ":hover": {
+          "color": {
+            "background": "#6a9a35"
+          }
+        }
+      }
+    },
+    "blocks": {
+      "core/quote": {
+        "border": {
+          "left": {
+            "color": "#8cc04b",
+            "width": "4px",
+            "style": "solid"
+          }
+        },
+        "color": {
+          "text": "#686868"
+        }
+      },
+      "core/table": {
+        "typography": {
+          "fontSize": "0.875rem"
+        }
+      }
+    }
+  }
+}

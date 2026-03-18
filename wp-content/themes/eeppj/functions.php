@@ -33,8 +33,55 @@ function eeppj_setup() {
     ]);
 
     set_post_thumbnail_size(800, 400, true);
+
+    // Editor styles — makes Gutenberg match the front-end
+    add_editor_style([
+        'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Montserrat:wght@600;700;800&display=swap',
+        'assets/css/editor-style.css',
+    ]);
+
 }
 add_action('after_setup_theme', 'eeppj_setup');
+
+/* ====== Block Patterns ====== */
+function eeppj_register_block_patterns() {
+    register_block_pattern_category('eeppj', [
+        'label' => __('EEPPJ', 'eeppj'),
+    ]);
+
+    $patterns_dir = get_template_directory() . '/patterns';
+    if (!is_dir($patterns_dir)) return;
+
+    foreach (glob($patterns_dir . '/*.php') as $file) {
+        $headers = get_file_data($file, [
+            'title'       => 'Title',
+            'slug'        => 'Slug',
+            'categories'  => 'Categories',
+            'description' => 'Description',
+            'keywords'    => 'Keywords',
+        ]);
+
+        if (empty($headers['title']) || empty($headers['slug'])) continue;
+
+        ob_start();
+        include $file;
+        $content = ob_get_clean();
+
+        // Strip the PHP header comment block from the content
+        $content = preg_replace('/^<\?php\s*\/\*\*.*?\*\/\s*\?>\s*/s', '', $content);
+
+        $args = [
+            'title'       => $headers['title'],
+            'content'     => $content,
+            'categories'  => array_map('trim', explode(',', $headers['categories'])),
+        ];
+        if (!empty($headers['description'])) $args['description'] = $headers['description'];
+        if (!empty($headers['keywords']))    $args['keywords'] = array_map('trim', explode(',', $headers['keywords']));
+
+        register_block_pattern($headers['slug'], $args);
+    }
+}
+add_action('init', 'eeppj_register_block_patterns');
 
 /* ====== Auto-create navigation menus on theme switch ====== */
 function eeppj_create_default_menus() {
