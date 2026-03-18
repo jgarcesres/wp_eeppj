@@ -33,13 +33,27 @@
   animation: cardFadeIn 0.6s ease-out forwards;
 }
 
+/* ====== Homepage featured section scroll-reveal ====== */
+/* Visible by default; JS adds .has-reveal then .is-visible for animation */
+.homepage-featured.has-reveal {
+  opacity: 0;
+  transform: translateY(2rem);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.homepage-featured.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* ====== Reduce motion for accessibility ====== */
 @media (prefers-reduced-motion: reduce) {
   .hero-fade,
   .quick-card,
-  .service-card {
+  .service-card,
+  .homepage-featured.has-reveal {
     opacity: 1;
     transform: none;
     animation: none;
+    transition: none;
   }
 }

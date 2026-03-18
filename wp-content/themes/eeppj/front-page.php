@@ -178,6 +178,19 @@ $recent_posts = new WP_Query([
   </div>
 </section>
 
+<!-- ====== FEATURED CAROUSEL ====== -->
+<?php if (is_active_sidebar('homepage-carousel')) :
+  ob_start();
+  dynamic_sidebar('homepage-carousel');
+  $carousel_output = ob_get_clean();
+  if (trim($carousel_output)) : ?>
+<section class="homepage-featured" style="padding-top: 4rem; padding-bottom: 4rem;">
+  <div class="max-w-7xl px-4 sm\:px-6" style="margin-left: auto; margin-right: auto;">
+    <?php echo $carousel_output; ?>
+  </div>
+</section>
+<?php endif; endif; ?>
+
 <!-- ====== RECENT NEWS ====== -->
 <section style="padding-top: 4rem; padding-bottom: 6rem; background-color: var(--color-surface-muted);">
   <div class="max-w-7xl px-4 sm\:px-6" style="margin-left: auto; margin-right: auto;">
@@ -283,5 +296,20 @@ $recent_posts = new WP_Query([
     .news-grid { grid-template-columns: repeat(3, 1fr); }
   }
 </style>
+
+<script>
+(function() {
+  var el = document.querySelector('.homepage-featured');
+  if (!el) return;
+  el.classList.add('has-reveal');
+  if (!('IntersectionObserver' in window)) { el.classList.add('is-visible'); return; }
+  try {
+    var observer = new IntersectionObserver(function(entries) {
+      if (entries.length > 0 && entries[0].isIntersecting) { el.classList.add('is-visible'); observer.disconnect(); }
+    }, { threshold: 0.15 });
+    observer.observe(el);
+  } catch (e) { el.classList.add('is-visible'); }
+})();
+</script>
 
 <?php get_footer(); ?>
