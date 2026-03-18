@@ -1,0 +1,46 @@
+# ColombiaHosting runs WP 6.8 on LiteSpeed, likely PHP 7.4 or 8.0 via cPanel MultiPHP.
+# PHP 7.4 images are EOL on Docker Hub, so we use 8.1 (oldest available).
+# All code is tested PHP 7.4-compatible (no PHP 8.0+ syntax).
+services:
+  wordpress:
+    image: wordpress:6.8-php8.1-apache
+    container_name: eeppj-wordpress
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: eeppj
+      WORDPRESS_DB_PASSWORD: eeppj_dev
+      WORDPRESS_DB_NAME: eeppj
+      WORDPRESS_TABLE_PREFIX: wp_
+      WORDPRESS_DEBUG: "1"
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./wp-content/themes/eeppj:/var/www/html/wp-content/themes/eeppj
+      - ./wp-content/plugins/eeppj-pqrrs:/var/www/html/wp-content/plugins/eeppj-pqrrs
+      - ./wp-content/plugins/eeppj-carousel:/var/www/html/wp-content/plugins/eeppj-carousel
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    container_name: eeppj-mysql
+    environment:
+      MYSQL_DATABASE: eeppj
+      MYSQL_USER: eeppj
+      MYSQL_PASSWORD: eeppj_dev
+      MYSQL_ROOT_PASSWORD: root_dev
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  wordpress_data:
+  db_data:

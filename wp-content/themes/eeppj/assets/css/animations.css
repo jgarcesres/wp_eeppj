@@ -1,0 +1,45 @@
+/* ====== Hero entrance animations ====== */
+.hero-fade {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: heroFadeIn 0.7s ease-out forwards;
+}
+
+@keyframes heroFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ====== Quick card entrance ====== */
+.quick-card {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: cardFadeIn 0.5s ease-out forwards;
+}
+
+@keyframes cardFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ====== Service card entrance (reuses cardFadeIn) ====== */
+.service-card {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: cardFadeIn 0.6s ease-out forwards;
+}
+
+/* ====== Reduce motion for accessibility ====== */
+@media (prefers-reduced-motion: reduce) {
+  .hero-fade,
+  .quick-card,
+  .service-card {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+}

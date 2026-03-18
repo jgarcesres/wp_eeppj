@@ -1,0 +1,13 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker data
+db_data/
+
+# IDE
+.vscode/
+.idea/
+
+# Node (if we add build tools later)
+node_modules/

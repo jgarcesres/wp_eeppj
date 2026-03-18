@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build theme ZIP
+        run: |
+          cd wp-content/themes
+          zip -r ../../eeppj-theme.zip eeppj/
+
+      - name: Build PQRRS plugin ZIP
+        run: |
+          cd wp-content/plugins
+          zip -r ../../eeppj-pqrrs.zip eeppj-pqrrs/
+
+      - name: Build Carousel plugin ZIP
+        run: |
+          cd wp-content/plugins
+          zip -r ../../eeppj-carousel.zip eeppj-carousel/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            eeppj-theme.zip
+            eeppj-pqrrs.zip
+            eeppj-carousel.zip

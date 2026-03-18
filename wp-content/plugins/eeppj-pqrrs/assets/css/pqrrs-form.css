@@ -1,0 +1,174 @@
+/* PQRRS Form Styles — matches Astro /pqrrs/ page */
+.pqrrs-form-wrapper {
+  max-width: none;
+}
+
+.pqrrs-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.pqrrs-form .pqrrs-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .pqrrs-form .pqrrs-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.pqrrs-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.pqrrs-field label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.375rem;
+}
+
+.pqrrs-label-muted {
+  font-weight: 400;
+  color: #686868;
+}
+
+/* Form inputs — matching Astro .form-input */
+.pqrrs-input {
+  width: 100%;
+  padding: 0.625rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-family: var(--font-sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 0.875rem;
+  color: #2d3748;
+  background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.pqrrs-input::placeholder {
+  color: #9ca3af;
+}
+
+.pqrrs-input:focus {
+  border-color: #8cc04b;
+  box-shadow: 0 0 0 3px rgba(140, 192, 75, 0.25);
+}
+
+.pqrrs-input.error {
+  border-color: #f87171;
+  box-shadow: none;
+}
+
+.pqrrs-input.error:focus {
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.2);
+  border-color: #f87171;
+}
+
+/* Select arrow */
+select.pqrrs-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.5rem;
+}
+
+/* File input — styled like Astro */
+.pqrrs-file-input {
+  width: 100%;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.pqrrs-file-input::file-selector-button {
+  margin-right: 1rem;
+  padding: 0.625rem 1rem;
+  border-radius: 0.5rem;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: rgba(140, 192, 75, 0.1);
+  color: #8cc04b;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.pqrrs-file-input::file-selector-button:hover {
+  background: rgba(140, 192, 75, 0.2);
+}
+
+/* Field-level error messages */
+.pqrrs-field-error {
+  color: #dc2626;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  display: none;
+}
+
+.pqrrs-field-error.visible {
+  display: block;
+}
+
+/* Submit button — full width */
+.pqrrs-submit {
+  width: 100%;
+  justify-content: center;
+  font-size: 1rem;
+  padding: 0.875rem 2rem;
+}
+
+.pqrrs-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Status messages — matching Astro styling */
+.pqrrs-status {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.pqrrs-status.success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.pqrrs-status.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.pqrrs-status.loading {
+  background: #eff6ff;
+  color: #1e40af;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Spinner for loading state */
+@keyframes pqrrs-spin {
+  to { transform: rotate(360deg); }
+}
+.pqrrs-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: pqrrs-spin 0.6s linear infinite;
+  flex-shrink: 0;
+}

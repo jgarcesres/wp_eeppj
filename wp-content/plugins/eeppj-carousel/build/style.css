@@ -1,0 +1,318 @@
+/* ============================================================
+   EEPPJ Carousel — Apple-inspired premium carousel
+   Font: SF Pro Display feel via system stack
+   Aesthetic: Ultra-clean, generous whitespace, glass-morphism controls
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap');
+
+/* === Container === */
+.eeppj-carousel {
+  --carousel-radius: 20px;
+  --carousel-bg: #000;
+  --carousel-text: #f5f5f7;
+  --carousel-text-muted: rgba(245, 245, 247, 0.65);
+  --carousel-accent: #f5f5f7;
+  --carousel-dot-inactive: rgba(245, 245, 247, 0.3);
+  --carousel-dot-active: #f5f5f7;
+  --carousel-control-bg: rgba(30, 30, 30, 0.72);
+  --carousel-control-border: rgba(255, 255, 255, 0.08);
+  --carousel-transition: 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+
+  position: relative;
+  width: 100%;
+  max-width: 1200px;
+  margin: 3rem auto;
+  border-radius: var(--carousel-radius);
+  background: var(--carousel-bg);
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+}
+
+/* === Viewport === */
+.eeppj-carousel__viewport {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* === Track === */
+.eeppj-carousel__track {
+  display: flex;
+  transition: transform var(--carousel-transition);
+  will-change: transform;
+}
+
+/* === Slide === */
+.eeppj-carousel__slide {
+  flex-shrink: 0;
+  position: relative;
+}
+
+.eeppj-carousel__slide-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3.5rem 2rem 5rem;
+  min-height: 480px;
+}
+
+/* === Text === */
+.eeppj-carousel__text {
+  text-align: center;
+  max-width: 680px;
+  margin-bottom: 2.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.eeppj-carousel__headline {
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: clamp(1.75rem, 4vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  color: var(--carousel-text);
+  margin: 0 0 0.75rem;
+}
+
+.eeppj-carousel__description {
+  font-size: clamp(0.95rem, 1.5vw, 1.15rem);
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--carousel-text-muted);
+  margin: 0;
+  letter-spacing: 0.005em;
+}
+
+/* === Media === */
+.eeppj-carousel__media {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.eeppj-carousel__image,
+.eeppj-carousel__video {
+  width: 100%;
+  height: auto;
+  max-height: 420px;
+  object-fit: contain;
+  border-radius: 12px;
+  display: block;
+}
+
+/* === Control Bar (Glass-morphism pill) === */
+.eeppj-carousel__controls {
+  position: absolute;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 6px 10px;
+  border-radius: 50px;
+  background: var(--carousel-control-bg);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid var(--carousel-control-border);
+  box-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.3),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.06);
+  z-index: 10;
+  transition: opacity 0.3s ease;
+}
+
+.eeppj-carousel:hover .eeppj-carousel__controls {
+  opacity: 1;
+}
+
+/* === Dots === */
+.eeppj-carousel__dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+}
+
+.eeppj-carousel__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--carousel-dot-inactive);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition:
+    width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 0.3s ease,
+    border-radius 0.3s ease;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.eeppj-carousel__dot:hover {
+  background: rgba(245, 245, 247, 0.5);
+}
+
+.eeppj-carousel__dot:focus-visible {
+  box-shadow: 0 0 0 2px rgba(245, 245, 247, 0.6);
+}
+
+.eeppj-carousel__dot.is-active {
+  width: 24px;
+  border-radius: 4px;
+  background: rgba(245, 245, 247, 0.15);
+}
+
+/* Progress fill — driven by JS via --progress-duration */
+.eeppj-carousel__dot::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  background: var(--carousel-dot-active);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Running: animate from 0 (or resumed position) to 100% */
+.eeppj-carousel__dot.is-active.is-running::after {
+  width: 100%;
+  transition: width var(--progress-duration, 5s) linear;
+}
+
+/* Paused: freeze at computed position */
+.eeppj-carousel__dot.is-active.is-paused::after {
+  width: var(--paused-width, 0%);
+  transition: none;
+}
+
+/* Inactive dots: no fill bar */
+.eeppj-carousel__dot:not(.is-active)::after {
+  width: 0%;
+  transition: none;
+}
+
+/* === Divider === */
+.eeppj-carousel__divider {
+  width: 1px;
+  height: 14px;
+  background: rgba(245, 245, 247, 0.15);
+  margin: 0 8px;
+  flex-shrink: 0;
+}
+
+/* === Play/Pause === */
+.eeppj-carousel__playpause {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--carousel-dot-inactive);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s ease, background-color 0.2s ease;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.eeppj-carousel__playpause:hover {
+  color: var(--carousel-text);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.eeppj-carousel__playpause:focus-visible {
+  box-shadow: 0 0 0 2px rgba(245, 245, 247, 0.6);
+}
+
+.eeppj-carousel__playpause.is-playing .eeppj-carousel__icon-play {
+  display: none;
+}
+
+.eeppj-carousel__playpause:not(.is-playing) .eeppj-carousel__icon-pause {
+  display: none;
+}
+
+.eeppj-carousel__playpause:not(.is-playing) .eeppj-carousel__icon-play {
+  display: block;
+}
+
+/* === Reduced motion === */
+@media (prefers-reduced-motion: reduce) {
+  .eeppj-carousel__track {
+    transition: none;
+  }
+  .eeppj-carousel__dot {
+    transition: none;
+  }
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+  .eeppj-carousel {
+    border-radius: 0;
+    margin: 0;
+  }
+
+  .eeppj-carousel__slide-inner {
+    padding: 2.5rem 1.25rem 4.5rem;
+    min-height: 380px;
+  }
+
+  .eeppj-carousel__text {
+    margin-bottom: 1.5rem;
+  }
+
+  .eeppj-carousel__image,
+  .eeppj-carousel__video {
+    max-height: 280px;
+  }
+
+  .eeppj-carousel__controls {
+    bottom: 0.75rem;
+    padding: 5px 8px;
+  }
+}
+
+/* === Light theme variant (add class .eeppj-carousel--light) === */
+.eeppj-carousel--light {
+  --carousel-bg: #fbfbfd;
+  --carousel-text: #1d1d1f;
+  --carousel-text-muted: rgba(29, 29, 31, 0.56);
+  --carousel-dot-inactive: rgba(29, 29, 31, 0.2);
+  --carousel-dot-active: #1d1d1f;
+  --carousel-control-bg: rgba(255, 255, 255, 0.8);
+  --carousel-control-border: rgba(0, 0, 0, 0.06);
+}
+
+.eeppj-carousel--light .eeppj-carousel__controls {
+  box-shadow:
+    0 2px 20px rgba(0, 0, 0, 0.08),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.9);
+}
+
+.eeppj-carousel--light .eeppj-carousel__playpause:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.eeppj-carousel--light .eeppj-carousel__divider {
+  background: rgba(0, 0, 0, 0.1);
+}

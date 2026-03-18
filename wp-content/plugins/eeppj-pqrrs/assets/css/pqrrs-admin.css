@@ -1,0 +1,469 @@
+/* ==========================================================================
+   PQRRS Admin — Swiss Utility Dashboard
+   Precise, information-dense, controlled clarity.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+/* — Tokens — */
+.eeppj-admin {
+  --pq-font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --pq-font-mono: 'JetBrains Mono', 'SF Mono', 'Consolas', monospace;
+  --pq-surface: #fff;
+  --pq-surface-raised: #fafbfc;
+  --pq-surface-muted: #f4f5f7;
+  --pq-border: #e1e4e8;
+  --pq-border-subtle: #eef0f2;
+  --pq-text-primary: #1b1f24;
+  --pq-text-secondary: #57606a;
+  --pq-text-tertiary: #8b949e;
+  --pq-accent: #1e4b75;
+  --pq-accent-green: #1a7f37;
+  --pq-radius-sm: 4px;
+  --pq-radius-md: 6px;
+  --pq-radius-lg: 8px;
+
+  max-width: 1120px;
+  font-family: var(--pq-font-body);
+  color: var(--pq-text-primary);
+}
+
+/* Override WP's default h1 */
+.eeppj-admin h1 {
+  font-family: var(--pq-font-body);
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--pq-text-primary);
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* ==========================================================================
+   Stat Cards — compact, uniform, monospaced numbers
+   ========================================================================== */
+.eeppj-stats {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin: 1.25rem 0 1.5rem;
+}
+
+.eeppj-stat-card {
+  background: var(--pq-surface);
+  border: 1px solid var(--pq-border);
+  border-radius: var(--pq-radius-lg);
+  padding: 14px 16px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.eeppj-stat-card:hover {
+  border-color: #c9cdd3;
+  box-shadow: 0 1px 3px rgba(27, 31, 36, 0.04);
+}
+
+/* Colored top accent — override the inline border-top to use a pseudo-element
+   so the card's border-radius isn't broken */
+.eeppj-stat-card[style*="border-top"] {
+  border-top-color: transparent !important;
+}
+.eeppj-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  /* Inherit the border-top-color from inline style */
+  background: var(--pq-accent);
+}
+.eeppj-stat-card[style*="border-top: 3px solid rgb(217, 119, 6)"]::before,
+.eeppj-stat-card[style*="border-top: 3px solid #d97706"]::before { background: #d97706; }
+.eeppj-stat-card[style*="border-top: 3px solid rgb(37, 99, 235)"]::before,
+.eeppj-stat-card[style*="border-top: 3px solid #2563eb"]::before { background: #2563eb; }
+.eeppj-stat-card[style*="border-top: 3px solid rgb(22, 163, 106)"]::before,
+.eeppj-stat-card[style*="border-top: 3px solid #16a34a"]::before { background: #16a34a; }
+.eeppj-stat-card[style*="border-top: 3px solid rgb(107, 114, 128)"]::before,
+.eeppj-stat-card[style*="border-top: 3px solid #6b7280"]::before { background: #6b7280; }
+
+.eeppj-stat-number {
+  font-family: var(--pq-font-mono);
+  font-size: 1.625rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  margin-bottom: 4px;
+}
+
+/* Override the first card (Total) that has no inline color */
+.eeppj-stat-card:first-child .eeppj-stat-number {
+  color: var(--pq-text-primary);
+}
+.eeppj-stat-card:first-child::before {
+  background: var(--pq-border);
+}
+
+.eeppj-stat-label {
+  font-family: var(--pq-font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--pq-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 0;
+}
+
+@media (max-width: 768px) {
+  .eeppj-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ==========================================================================
+   Filter Bars — segmented control feel
+   ========================================================================== */
+.eeppj-filter-group {
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eeppj-filter {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+
+.eeppj-filter strong {
+  font-family: var(--pq-font-body) !important;
+  font-size: 0.6875rem !important;
+  font-weight: 600 !important;
+  color: var(--pq-text-tertiary) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-right: 6px !important;
+  user-select: none;
+}
+
+.eeppj-filter a {
+  padding: 5px 12px;
+  border-radius: var(--pq-radius-sm);
+  font-family: var(--pq-font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--pq-text-secondary);
+  border: 1px solid transparent;
+  background: transparent;
+  transition: all 0.12s ease;
+  line-height: 1.4;
+}
+
+.eeppj-filter a:hover {
+  color: var(--pq-text-primary);
+  background: var(--pq-surface-muted);
+  border-color: transparent;
+}
+
+.eeppj-filter a.active {
+  background: var(--pq-text-primary);
+  color: #fff;
+  border-color: transparent;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   Data Table — tight, scannable, monospaced IDs
+   ========================================================================== */
+.eeppj-admin .wp-list-table {
+  border: 1px solid var(--pq-border);
+  border-radius: var(--pq-radius-lg);
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  font-family: var(--pq-font-body);
+  font-size: 0.8125rem;
+}
+
+.eeppj-admin .wp-list-table thead th {
+  background: var(--pq-surface-raised);
+  border-bottom: 1px solid var(--pq-border);
+  font-family: var(--pq-font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pq-text-tertiary);
+  padding: 10px 12px;
+  white-space: nowrap;
+}
+
+.eeppj-admin .wp-list-table tbody td {
+  padding: 10px 12px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--pq-border-subtle);
+  color: var(--pq-text-primary);
+  font-size: 0.8125rem;
+}
+
+.eeppj-admin .wp-list-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.eeppj-admin .wp-list-table tbody tr:hover td {
+  background: #f8f9fb;
+}
+
+/* Radicado — monospaced */
+.eeppj-admin .wp-list-table code {
+  font-family: var(--pq-font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: var(--pq-surface-muted);
+  padding: 2px 6px;
+  border-radius: var(--pq-radius-sm);
+  color: var(--pq-text-secondary);
+  border: none;
+}
+
+/* ==========================================================================
+   Type Badges — compact pills
+   ========================================================================== */
+.eeppj-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--pq-radius-sm);
+  color: #fff;
+  font-family: var(--pq-font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  letter-spacing: 0.01em;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Status Select — compact, doesn't overflow column
+   ========================================================================== */
+.eeppj-status-select {
+  font-family: var(--pq-font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 24px 4px 8px;
+  border-radius: var(--pq-radius-sm);
+  border: 1.5px solid;
+  background-color: var(--pq-surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2357606a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  min-width: 0;
+  max-width: 130px;
+  line-height: 1.4;
+  transition: box-shadow 0.12s ease;
+}
+
+.eeppj-status-select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(30, 75, 117, 0.15);
+}
+
+.eeppj-status-select:hover {
+  box-shadow: 0 0 0 1px rgba(30, 75, 117, 0.1);
+}
+
+/* Status badge (non-editable) */
+.eeppj-status-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: var(--pq-radius-sm);
+  font-family: var(--pq-font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   Action Buttons — subtle, tight
+   ========================================================================== */
+.eeppj-admin .button.button-small {
+  font-family: var(--pq-font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 3px 10px;
+  min-height: 0;
+  line-height: 1.5;
+  border-radius: var(--pq-radius-sm);
+  border-color: var(--pq-border);
+  color: var(--pq-text-secondary);
+  background: var(--pq-surface);
+  transition: all 0.12s ease;
+}
+
+.eeppj-admin .button.button-small:hover {
+  border-color: #c9cdd3;
+  color: var(--pq-text-primary);
+  background: var(--pq-surface-raised);
+}
+
+.eeppj-admin .button-link-delete {
+  color: #cf222e !important;
+  border-color: transparent !important;
+  background: transparent !important;
+}
+
+.eeppj-admin .button-link-delete:hover {
+  background: #fff1f0 !important;
+  border-color: #ffc2c0 !important;
+}
+
+/* ==========================================================================
+   Pagination
+   ========================================================================== */
+.eeppj-admin .tablenav {
+  margin-top: 12px;
+}
+
+.eeppj-admin .tablenav-pages .button {
+  font-family: var(--pq-font-mono);
+  font-size: 0.75rem;
+  min-width: 32px;
+  text-align: center;
+}
+
+/* ==========================================================================
+   Detail Modal — elevated, clean
+   ========================================================================== */
+#eeppj-modal > div {
+  font-family: var(--pq-font-body);
+  box-shadow:
+    0 24px 48px -12px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+  border: none;
+}
+
+#eeppj-modal h2 {
+  font-family: var(--pq-font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--pq-text-primary);
+}
+
+#eeppj-modal h2 code {
+  font-family: var(--pq-font-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  background: var(--pq-surface-muted);
+  padding: 2px 8px;
+  border-radius: var(--pq-radius-sm);
+  color: var(--pq-text-secondary);
+  margin-left: 4px;
+}
+
+#eeppj-modal .form-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+#eeppj-modal .form-table th {
+  font-family: var(--pq-font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--pq-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 8px 12px 8px 0;
+  width: 80px;
+  vertical-align: top;
+  border-bottom: 1px solid var(--pq-border-subtle);
+}
+
+#eeppj-modal .form-table td {
+  font-size: 0.8125rem;
+  color: var(--pq-text-primary);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--pq-border-subtle);
+  line-height: 1.5;
+}
+
+#eeppj-modal .form-table tr:last-child th,
+#eeppj-modal .form-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Status bar inside modal */
+#modal-status-bar {
+  border-radius: var(--pq-radius-md) !important;
+  font-family: var(--pq-font-body);
+}
+
+#modal-status-text {
+  font-family: var(--pq-font-body) !important;
+  font-size: 0.8125rem !important;
+}
+
+#modal-updated {
+  font-family: var(--pq-font-mono) !important;
+  font-size: 0.6875rem !important;
+}
+
+/* Notes section in modal */
+#modal-notes {
+  font-family: var(--pq-font-body);
+  font-size: 0.8125rem;
+  border: 1px solid var(--pq-border);
+  border-radius: var(--pq-radius-md);
+  padding: 8px 10px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+#modal-notes:focus {
+  border-color: var(--pq-accent);
+  box-shadow: 0 0 0 2px rgba(30, 75, 117, 0.1);
+  outline: none;
+}
+
+#modal-save-notes {
+  font-family: var(--pq-font-body) !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+}
+
+/* Close button */
+#eeppj-modal-close {
+  width: 28px;
+  height: 28px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--pq-radius-sm);
+  color: var(--pq-text-tertiary) !important;
+  font-size: 1.125rem !important;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+#eeppj-modal-close:hover {
+  background: var(--pq-surface-muted);
+  color: var(--pq-text-primary) !important;
+}
+
+/* ==========================================================================
+   Empty State
+   ========================================================================== */
+.eeppj-admin .wp-list-table td[colspan] {
+  font-family: var(--pq-font-body);
+  font-size: 0.875rem;
+  color: var(--pq-text-tertiary) !important;
+  padding: 2rem !important;
+}

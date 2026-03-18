@@ -1,0 +1,33 @@
+/* Editor-specific overrides for the carousel block */
+.wp-block[data-type="eeppj/carousel"] {
+  max-width: 100%;
+}
+
+/* Fix WP editor input styling within our dark block */
+.wp-block[data-type="eeppj/carousel"] .components-text-control__input,
+.wp-block[data-type="eeppj/carousel"] .components-textarea-control__input {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #f5f5f7 !important;
+  border-radius: 8px !important;
+  font-family: 'DM Sans', -apple-system, sans-serif;
+}
+
+.wp-block[data-type="eeppj/carousel"] .components-text-control__input::placeholder,
+.wp-block[data-type="eeppj/carousel"] .components-textarea-control__input::placeholder {
+  color: rgba(245, 245, 247, 0.35) !important;
+}
+
+.wp-block[data-type="eeppj/carousel"] .components-text-control__input:focus,
+.wp-block[data-type="eeppj/carousel"] .components-textarea-control__input:focus {
+  border-color: rgba(245, 245, 247, 0.3) !important;
+  box-shadow: 0 0 0 1px rgba(245, 245, 247, 0.15) !important;
+}
+
+.wp-block[data-type="eeppj/carousel"] .components-base-control__label {
+  color: rgba(245, 245, 247, 0.5) !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  font-weight: 500 !important;
+}
