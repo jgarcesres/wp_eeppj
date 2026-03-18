@@ -236,7 +236,10 @@ class EEPPJ_PQRRS_Reports {
         $where = 'WHERE ' . implode(' AND ', $where_parts);
 
         $submissions = $wpdb->get_results(
-            "SELECT * FROM $table $where ORDER BY created_at DESC LIMIT $per_page OFFSET $offset"
+            $wpdb->prepare(
+                "SELECT * FROM $table $where ORDER BY created_at DESC LIMIT %d OFFSET %d",
+                $per_page, $offset
+            )
         );
         $total_filtered = (int) $wpdb->get_var("SELECT COUNT(*) FROM $table $where");
         $total_pages = (int) ceil($total_filtered / $per_page);
@@ -345,9 +348,9 @@ class EEPPJ_PQRRS_Reports {
               <div class="tablenav-pages">
                 <?php for ($i = 1; $i <= $total_pages; $i++) : ?>
                   <?php if ($i === $page) : ?>
-                    <span class="tablenav-pages-navspan button disabled"><?php echo $i; ?></span>
+                    <span class="tablenav-pages-navspan button disabled"><?php echo esc_html($i); ?></span>
                   <?php else : ?>
-                    <a class="button" href="<?php echo esc_url(add_query_arg('paged', $i)); ?>"><?php echo $i; ?></a>
+                    <a class="button" href="<?php echo esc_url(add_query_arg('paged', $i)); ?>"><?php echo esc_html($i); ?></a>
                   <?php endif; ?>
                 <?php endfor; ?>
               </div>
@@ -482,6 +485,7 @@ class EEPPJ_PQRRS_Reports {
     }
 
     private static function send_csv_headers($filename) {
+        $filename = sanitize_file_name($filename);
         header('Content-Type: text/csv; charset=UTF-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         header('Pragma: no-cache');
