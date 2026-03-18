@@ -201,6 +201,8 @@ class EEPPJ_Updater_Admin {
                 ? version_compare($remote_version, $current, '>')
                 : false;
 
+            $is_active_theme = ($c['type'] === 'theme' && get_stylesheet() === $c['slug']);
+
             $results[] = array(
                 'name'             => $c['name'],
                 'slug'             => $c['slug'],
@@ -211,6 +213,7 @@ class EEPPJ_Updater_Admin {
                 'release_url'      => $release ? esc_url($release['html_url']) : null,
                 'update_available' => $update_available,
                 'has_asset'        => $has_asset,
+                'is_active_theme'  => $is_active_theme,
             );
         }
 
@@ -421,11 +424,16 @@ class EEPPJ_Updater_Admin {
                             $action.text('—');
                         } else if (c.update_available) {
                             $status.append($('<span>').css({ color: '#d97706', fontWeight: '600' }).text('Actualización disponible'));
-                            $action.append(
-                                $('<button>').addClass('button button-primary eeppj-update-btn')
-                                    .attr({ 'data-slug': c.slug, 'data-type': c.type, 'data-name': c.name })
-                                    .text('Actualizar')
-                            );
+                            var $btn = $('<button>').addClass('button button-primary eeppj-update-btn')
+                                .attr({ 'data-slug': c.slug, 'data-type': c.type, 'data-name': c.name })
+                                .text('Actualizar');
+                            if (c.is_active_theme) {
+                                $btn.attr('data-warn', '1');
+                            }
+                            $action.append($btn);
+                            if (c.is_active_theme) {
+                                $action.append($('<div>').css({ fontSize: '11px', color: '#d97706', marginTop: '4px' }).text('Tema activo — el sitio estará brevemente en mantenimiento'));
+                            }
                         } else {
                             $status.append($('<span>').css('color', '#16a34a').text('Al día ✓'));
                             $action.text('—');
@@ -453,6 +461,12 @@ class EEPPJ_Updater_Admin {
                 var slug = $btn.data('slug');
                 var type = $btn.data('type');
                 var name = $btn.data('name');
+
+                if ($btn.data('warn')) {
+                    if (!confirm('Actualizar el tema activo pondrá el sitio brevemente en modo mantenimiento. ¿Continuar?')) {
+                        return;
+                    }
+                }
 
                 $btn.prop('disabled', true).text('Actualizando...');
                 showLog('Actualizando ' + name + '...', 'info');
