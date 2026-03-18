@@ -2,7 +2,7 @@
 /**
  * Plugin Name: EEPPJ Carousel
  * Description: Apple-style premium content carousel — Gutenberg block with autoplay, smooth transitions, and floating control bar.
- * Version: 1.4.0
+ * Version: 1.4.1
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: EEPPJ
@@ -12,7 +12,7 @@
 
 defined('ABSPATH') || exit;
 
-define('EEPPJ_CAROUSEL_VERSION', '1.4.0');
+define('EEPPJ_CAROUSEL_VERSION', '1.4.1');
 define('EEPPJ_CAROUSEL_PATH', plugin_dir_path(__FILE__));
 define('EEPPJ_CAROUSEL_URL', plugin_dir_url(__FILE__));
 

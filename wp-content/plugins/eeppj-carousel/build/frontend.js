@@ -55,8 +55,8 @@
       activeDot.classList.remove('is-running');
       activeDot.classList.add('is-paused');
 
-      // Estimate elapsed from timer scheduling (avoids needing progressStart)
-      pausedElapsed = autoplayMs - getRemainingTime();
+      var remaining = getRemainingTime();
+      pausedElapsed = remaining > 0 ? autoplayMs - remaining : 0;
     }
 
     function resumeProgress() {
@@ -237,7 +237,10 @@
     }
     document.addEventListener('visibilitychange', onVisibilityChange);
 
-    // Init — goTo starts progress via deferred setTimeout, no double call
+    // Init
     goTo(0);
+    if (isPlaying) {
+      startProgress();
+    }
   }
 })();
