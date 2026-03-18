@@ -272,8 +272,6 @@ class EEPPJ_Theme_GitHub_Updater {
         }
 
         return $best_release;
-
-        return null;
     }
 
     /**
@@ -323,7 +321,13 @@ class EEPPJ_Theme_GitHub_Updater {
 
         foreach ($release['assets'] as $asset) {
             if (isset($asset['name']) && $asset['name'] === $this->asset_name) {
-                return isset($asset['browser_download_url']) ? $asset['browser_download_url'] : null;
+                $url = isset($asset['browser_download_url']) ? $asset['browser_download_url'] : null;
+                $expected = 'https://github.com/' . $this->github_repo . '/releases/download/';
+                if ($url && strpos($url, $expected) !== 0) {
+                    error_log('EEPPJ Updater: Rejected download URL "' . $url . '" — expected prefix "' . $expected . '"');
+                    return null;
+                }
+                return $url;
             }
         }
 

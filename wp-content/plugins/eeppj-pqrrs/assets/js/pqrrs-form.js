@@ -87,6 +87,13 @@
     });
   }
 
+  function escHtml(str) {
+    if (str == null) return '';
+    var el = document.createElement('span');
+    el.textContent = String(str);
+    return el.innerHTML;
+  }
+
   function showStatus(html, type) {
     statusEl.innerHTML = html;
     statusEl.className = 'pqrrs-status ' + type;
@@ -138,7 +145,7 @@
           '<div style="display:flex;align-items:flex-start;gap:0.75rem;">' +
             '<svg style="width:1.25rem;height:1.25rem;color:#dc2626;flex-shrink:0;margin-top:0.125rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
             '<div><p style="font-weight:600;">Error al enviar</p>' +
-            '<p style="margin-top:0.25rem;color:#b91c1c;">' + (err.message || 'No se pudo procesar su solicitud. Intente nuevamente o comuníquese por teléfono al +60 (4) 852 37 64.') + '</p></div>' +
+            '<p style="margin-top:0.25rem;color:#b91c1c;">' + escHtml(err.message || 'No se pudo procesar su solicitud. Intente nuevamente o comuníquese por teléfono al +60 (4) 852 37 64.') + '</p></div>' +
           '</div>',
           'error'
         );
