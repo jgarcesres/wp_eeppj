@@ -9,7 +9,7 @@ test.describe('PQRRS Form', () => {
     await expect(page.locator('select[name="tipo"]')).toBeVisible();
     await expect(page.locator('input[name="asunto"]')).toBeVisible();
     await expect(page.locator('textarea[name="mensaje"]')).toBeVisible();
-    await expect(page.locator('button[type="submit"]')).toBeVisible();
+    await expect(page.locator('#pqrrs-submit')).toBeVisible();
   });
 
   test('form shows validation errors on empty submit', async ({ page }) => {
