@@ -125,16 +125,31 @@ class EEPPJ_PQRRS_Handler {
     }
 
     private static function get_client_ip() {
-        $headers = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR'];
-        foreach ($headers as $header) {
-            if (!empty($_SERVER[$header])) {
-                $ip = explode(',', $_SERVER[$header])[0];
-                $ip = trim($ip);
-                if (filter_var($ip, FILTER_VALIDATE_IP)) {
-                    return $ip;
-                }
+        $trusted_header = get_option('eeppj_pqrrs_trusted_ip_header', '');
+        $allowed_headers = array('HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR');
+
+        // Validate trusted header against allowlist (defense-in-depth against tampered option).
+        if (!empty($trusted_header) && !in_array($trusted_header, $allowed_headers, true)) {
+            error_log('EEPPJ PQRRS: Invalid trusted_ip_header option value: ' . $trusted_header . '. Ignoring.');
+            $trusted_header = '';
+        }
+
+        // Check trusted proxy header first for public IP, then fall back to REMOTE_ADDR.
+        if (!empty($trusted_header) && !empty($_SERVER[$trusted_header])) {
+            $ip = explode(',', sanitize_text_field($_SERVER[$trusted_header]))[0];
+            $ip = trim($ip);
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                return $ip;
             }
         }
+
+        // REMOTE_ADDR: accept any valid IP including private ranges (local dev / intranet).
+        $remote = isset($_SERVER['REMOTE_ADDR']) ? trim(sanitize_text_field($_SERVER['REMOTE_ADDR'])) : '';
+        if (filter_var($remote, FILTER_VALIDATE_IP)) {
+            return $remote;
+        }
+
+        error_log('EEPPJ PQRRS: Could not determine client IP. REMOTE_ADDR is missing or invalid.');
         return '0.0.0.0';
     }
 }

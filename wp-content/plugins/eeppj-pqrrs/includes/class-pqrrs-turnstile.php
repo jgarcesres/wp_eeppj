@@ -18,11 +18,16 @@ class EEPPJ_PQRRS_Turnstile {
      * @return true|string  True if valid, error message if not
      */
     public static function verify($token, $ip = '') {
-        $secret = get_option('eeppj_pqrrs_turnstile_secret');
+        $secret   = get_option('eeppj_pqrrs_turnstile_secret');
+        $site_key = get_option('eeppj_pqrrs_turnstile_site_key');
+        $require  = get_option('eeppj_pqrrs_require_turnstile', '1');
+        $keys_missing = empty($secret) || empty($site_key);
 
-        if (empty($secret)) {
-            // No Turnstile configured — skip verification.
-            // In production, configure keys in PQRRS > Ajustes to enforce CAPTCHA.
+        if ($keys_missing) {
+            if ($require === '1') {
+                return 'CAPTCHA no configurado. Contacte al administrador del sitio.';
+            }
+            // Turnstile explicitly disabled — skip verification (dev/testing only).
             return true;
         }
 
@@ -40,12 +45,15 @@ class EEPPJ_PQRRS_Turnstile {
         ]);
 
         if (is_wp_error($response)) {
+            error_log('EEPPJ PQRRS Turnstile verification failed: ' . $response->get_error_message());
             return 'Error al verificar CAPTCHA. Intente de nuevo.';
         }
 
         $body = json_decode(wp_remote_retrieve_body($response), true);
 
         if (empty($body['success'])) {
+            $error_codes = isset($body['error-codes']) ? implode(', ', $body['error-codes']) : 'unknown';
+            error_log('EEPPJ PQRRS Turnstile rejected token. Error codes: ' . $error_codes);
             return 'Verificación CAPTCHA fallida. Intente de nuevo.';
         }
 
