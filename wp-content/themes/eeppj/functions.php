@@ -402,6 +402,12 @@ function eeppj_doc_icon($type) {
 
 /* ====== GitHub Auto-Updater ====== */
 require_once get_template_directory() . '/includes/class-github-updater.php';
+
+/* ====== Admin Update Manager ====== */
+if (is_admin()) {
+    require_once get_template_directory() . '/includes/class-eeppj-updater-admin.php';
+    new EEPPJ_Updater_Admin();
+}
 new EEPPJ_Theme_GitHub_Updater(
     'eeppj',
     'jgarcesres/wp_eeppj',
