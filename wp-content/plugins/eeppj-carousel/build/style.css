@@ -175,7 +175,7 @@
   background: rgba(245, 245, 247, 0.15);
 }
 
-/* Progress fill — driven by JS via --progress-duration */
+/* Progress fill — uses CSS animation with play-state for pause/resume */
 .eeppj-carousel__dot::after {
   content: '';
   position: absolute;
@@ -188,22 +188,27 @@
   pointer-events: none;
 }
 
-/* Running: animate from 0 (or resumed position) to 100% */
-.eeppj-carousel__dot.is-active.is-running::after {
-  width: 100%;
-  transition: width var(--progress-duration, 5s) linear;
+@keyframes eeppj-progress-fill {
+  from { width: 0%; }
+  to   { width: 100%; }
 }
 
-/* Paused: freeze at computed position */
+/* Running: animate from 0% to 100%, pausable via animation-play-state */
+.eeppj-carousel__dot.is-active.is-running::after {
+  animation: eeppj-progress-fill var(--progress-duration, 5s) linear forwards;
+  animation-play-state: running;
+}
+
+/* Paused: freeze the animation in place */
 .eeppj-carousel__dot.is-active.is-paused::after {
-  width: var(--paused-width, 0%);
-  transition: none;
+  animation: eeppj-progress-fill var(--progress-duration, 5s) linear forwards;
+  animation-play-state: paused;
 }
 
 /* Inactive dots: no fill bar */
 .eeppj-carousel__dot:not(.is-active)::after {
   width: 0%;
-  transition: none;
+  animation: none;
 }
 
 /* === Divider === */

@@ -1,6 +1,6 @@
 /**
  * EEPPJ Carousel — Frontend controller
- * Apple-style autoplay with progress-bar dots
+ * Apple-style autoplay with progress-bar dots, looping, hover pause/resume
  */
 (function () {
   'use strict';
@@ -18,84 +18,97 @@
 
     var current = 0;
     var isPlaying = true;
-    var timer = null;
+    var advanceTimer = null;
     var isTransitioning = false;
-    var progressStart = 0;     // timestamp when current progress started
-    var pausedElapsed = 0;     // ms elapsed when paused (to resume from)
+    var progressStart = 0;
+    var pausedElapsed = 0;
     var isHovering = false;
 
-    // Touch/swipe support
+    // Touch/swipe
     var touchStartX = 0;
     var touchThreshold = 50;
 
-    // Set the CSS custom property for progress duration
     el.style.setProperty('--progress-duration', autoplayMs + 'ms');
 
     function startProgress() {
       var activeDot = dots[current];
       if (!activeDot) return;
 
-      // Reset: remove classes, force reflow, then add
+      // Fresh start: reset animation and apply running state
       activeDot.classList.remove('is-running', 'is-paused');
-      activeDot.style.removeProperty('--paused-width');
-
-      // If resuming from a pause, shorten the duration for the remaining time
-      var remaining = autoplayMs - pausedElapsed;
-      if (pausedElapsed > 0) {
-        // Set a partial starting width so the bar picks up where it left off
-        var pct = (pausedElapsed / autoplayMs) * 100;
-        activeDot.style.setProperty('--progress-duration', remaining + 'ms');
-        // Force the ::after to start at the paused width
-        var afterEl = activeDot;
-        afterEl.style.setProperty('--progress-start', pct + '%');
-      } else {
-        activeDot.style.setProperty('--progress-duration', autoplayMs + 'ms');
-        activeDot.style.removeProperty('--progress-start');
-      }
-
-      // Force reflow so the transition restarts
-      void activeDot.offsetWidth;
-
+      activeDot.style.setProperty('--progress-duration', autoplayMs + 'ms');
+      void activeDot.offsetWidth; // force reflow to restart animation
       activeDot.classList.add('is-running');
-      progressStart = performance.now() - pausedElapsed;
+
+      progressStart = performance.now();
+      pausedElapsed = 0;
+      scheduleAdvance(autoplayMs);
     }
 
-    function stopProgress(freeze) {
+    function pauseProgress() {
       var activeDot = dots[current];
       if (!activeDot) return;
 
-      if (freeze) {
-        // Calculate how far along we are
-        pausedElapsed = performance.now() - progressStart;
-        if (pausedElapsed > autoplayMs) pausedElapsed = autoplayMs;
-        var pct = (pausedElapsed / autoplayMs) * 100;
+      cancelAdvance();
 
-        // Freeze the bar at current position
+      // Switch from running to paused — CSS animation-play-state freezes in place
+      if (activeDot.classList.contains('is-running')) {
         activeDot.classList.remove('is-running');
         activeDot.classList.add('is-paused');
-        activeDot.style.setProperty('--paused-width', pct + '%');
-      } else {
-        activeDot.classList.remove('is-running', 'is-paused');
-        activeDot.style.removeProperty('--paused-width');
-        pausedElapsed = 0;
+        pausedElapsed = performance.now() - progressStart;
+        if (pausedElapsed > autoplayMs) pausedElapsed = autoplayMs;
+      }
+    }
+
+    function resumeProgress() {
+      var activeDot = dots[current];
+      if (!activeDot) return;
+
+      // Switch from paused back to running — CSS animation-play-state resumes
+      if (activeDot.classList.contains('is-paused')) {
+        activeDot.classList.remove('is-paused');
+        activeDot.classList.add('is-running');
+
+        var remaining = autoplayMs - pausedElapsed;
+        if (remaining <= 0) {
+          advance();
+          return;
+        }
+        progressStart = performance.now() - pausedElapsed;
+        scheduleAdvance(remaining);
       }
     }
 
     function resetProgress() {
-      // Clear all dots
+      cancelAdvance();
       dots.forEach(function (dot) {
         dot.classList.remove('is-running', 'is-paused');
-        dot.style.removeProperty('--paused-width');
-        dot.style.removeProperty('--progress-start');
-        dot.style.removeProperty('--progress-duration');
       });
       pausedElapsed = 0;
     }
 
-    function goTo(index, resetTimer) {
+    function scheduleAdvance(ms) {
+      cancelAdvance();
+      advanceTimer = setTimeout(function () {
+        advanceTimer = null;
+        advance();
+      }, ms);
+    }
+
+    function cancelAdvance() {
+      if (advanceTimer) {
+        clearTimeout(advanceTimer);
+        advanceTimer = null;
+      }
+    }
+
+    function advance() {
+      goTo(current + 1);
+    }
+
+    function goTo(index) {
       if (isTransitioning && index !== current) return;
 
-      // Stop progress on old dot
       resetProgress();
 
       current = ((index % slideCount) + slideCount) % slideCount;
@@ -103,14 +116,12 @@
 
       track.style.transform = 'translateX(-' + (current * (100 / slideCount)) + '%)';
 
-      // Update dots
       dots.forEach(function (dot, i) {
         var isActive = i === current;
         dot.classList.toggle('is-active', isActive);
         dot.setAttribute('aria-selected', isActive ? 'true' : 'false');
       });
 
-      // Announce for screen readers
       var activeSlide = track.children[current];
       if (activeSlide) {
         activeSlide.setAttribute('aria-hidden', 'false');
@@ -119,89 +130,59 @@
         }
       }
 
-      // Clear transition lock after slide animation completes
       setTimeout(function () {
         isTransitioning = false;
       }, 650);
 
-      // Start progress on new dot (after a small delay for the slide transition)
-      pausedElapsed = 0;
       if (isPlaying && !isHovering) {
         setTimeout(function () {
           startProgress();
         }, 50);
       }
-
-      if (resetTimer !== false) {
-        restartTimer();
-      }
     }
 
-    function next() {
-      goTo(current + 1, false);
-    }
-
-    function startTimer() {
-      if (timer) clearInterval(timer);
-      timer = setInterval(next, autoplayMs);
-    }
-
-    function stopTimer() {
-      if (timer) {
-        clearInterval(timer);
-        timer = null;
-      }
-    }
-
-    function restartTimer() {
-      if (isPlaying) {
-        stopTimer();
-        startTimer();
-      }
-    }
-
-    function togglePlay() {
-      isPlaying = !isPlaying;
+    function setPlayState(playing) {
+      isPlaying = playing;
       if (playPauseBtn) {
         playPauseBtn.classList.toggle('is-playing', isPlaying);
         playPauseBtn.setAttribute('aria-label', isPlaying ? 'Pausar carrusel' : 'Reproducir carrusel');
       }
       if (isPlaying) {
         startProgress();
-        startTimer();
       } else {
-        stopProgress(true);
-        stopTimer();
+        pauseProgress();
       }
     }
 
-    // Bind dot clicks
+    function togglePlay() {
+      setPlayState(!isPlaying);
+    }
+
+    // Dot clicks
     dots.forEach(function (dot) {
       dot.addEventListener('click', function () {
-        var index = parseInt(dot.dataset.index, 10);
-        goTo(index);
+        goTo(parseInt(dot.dataset.index, 10));
       });
     });
 
-    // Bind play/pause
+    // Play/pause button
     if (playPauseBtn) {
       playPauseBtn.addEventListener('click', togglePlay);
     }
 
-    // Touch support
+    // Touch
     el.addEventListener('touchstart', function (e) {
       touchStartX = e.changedTouches[0].screenX;
     }, { passive: true });
 
     el.addEventListener('touchend', function (e) {
-      var touchEndX = e.changedTouches[0].screenX;
-      var diff = touchStartX - touchEndX;
+      var diff = touchStartX - e.changedTouches[0].screenX;
       if (Math.abs(diff) > touchThreshold) {
         goTo(diff > 0 ? current + 1 : current - 1);
       }
     }, { passive: true });
 
-    // Keyboard navigation
+    // Keyboard
     el.addEventListener('keydown', function (e) {
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
         e.preventDefault();
@@ -215,41 +196,36 @@
       }
     });
 
-    // Pause on hover — freeze progress, resume on leave
+    // Hover: pause animation, resume on leave
     el.addEventListener('mouseenter', function () {
       isHovering = true;
       if (isPlaying) {
-        stopProgress(true);
-        stopTimer();
+        pauseProgress();
       }
     });
 
     el.addEventListener('mouseleave', function () {
       isHovering = false;
       if (isPlaying) {
-        startProgress();
-        startTimer();
+        resumeProgress();
       }
     });
 
-    // Pause when tab is not visible
+    // Visibility: pause when tab hidden
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) {
         if (isPlaying) {
-          stopProgress(true);
-          stopTimer();
+          pauseProgress();
         }
       } else if (isPlaying && !isHovering) {
-        startProgress();
-        startTimer();
+        resumeProgress();
       }
     });
 
-    // Initialize
-    goTo(0, false);
+    // Init
+    goTo(0);
     if (isPlaying) {
       startProgress();
-      startTimer();
     }
   }
 })();
