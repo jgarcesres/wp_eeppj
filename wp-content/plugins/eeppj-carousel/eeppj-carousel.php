@@ -113,10 +113,12 @@ function eeppj_carousel_render($attributes) {
     $slides = $attributes['slides'] ?? [];
     $autoplay = (int) ($attributes['autoplayDuration'] ?? 5000);
     $show_play_pause = $attributes['showPlayPause'] ?? true;
-    $block_id = (!empty($attributes['blockId']) && preg_match('/^[a-zA-Z0-9_-]+$/', $attributes['blockId']))
-        ? $attributes['blockId']
+    $raw_id = isset($attributes['blockId']) && is_string($attributes['blockId']) ? $attributes['blockId'] : '';
+    $block_id = (!empty($raw_id) && preg_match('/^[a-zA-Z0-9_-]+$/', $raw_id))
+        ? $raw_id
         : 'eeppj-carousel-' . wp_unique_id();
     $allowed_themes = array('dark', 'light');
+    $allowed_media = array('image', 'video');
     $theme = isset($attributes['theme']) && in_array($attributes['theme'], $allowed_themes, true)
         ? $attributes['theme']
         : 'dark';
@@ -145,7 +147,6 @@ function eeppj_carousel_render($attributes) {
               $headline = $slide['headline'] ?? '';
               $description = $slide['description'] ?? '';
               $mediaUrl = $slide['mediaUrl'] ?? '';
-              $allowed_media = array('image', 'video');
               $mediaType = isset($slide['mediaType']) && in_array($slide['mediaType'], $allowed_media, true)
                   ? $slide['mediaType']
                   : 'image';

@@ -76,7 +76,7 @@ class EEPPJ_PQRRS_Validator {
         }
 
         // For DOCX: verify it's actually an OOXML document, not just any ZIP file.
-        if ($ext === 'docx') {
+        if ($ext === 'docx' && class_exists('ZipArchive')) {
             $zip = new ZipArchive();
             if ($zip->open($file['tmp_name']) === true) {
                 $has_content_types = ($zip->locateName('[Content_Types].xml') !== false);
