@@ -467,3 +467,68 @@
   color: var(--pq-text-tertiary) !important;
   padding: 2rem !important;
 }
+
+/* ==========================================================================
+   Reports — date controls, numeric cells, back link
+   ========================================================================== */
+.eeppj-report-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin: 1.25rem 0 1.5rem;
+  flex-wrap: wrap;
+}
+
+.eeppj-report-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--pq-font-body);
+}
+
+.eeppj-report-controls input[type="month"] {
+  font-family: var(--pq-font-mono);
+  font-size: 0.8125rem;
+  padding: 6px 10px;
+  border: 1px solid var(--pq-border);
+  border-radius: var(--pq-radius-md);
+  background: var(--pq-surface);
+  color: var(--pq-text-primary);
+  line-height: 1.4;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.eeppj-report-controls input[type="month"]:focus {
+  outline: none;
+  border-color: var(--pq-accent);
+  box-shadow: 0 0 0 2px rgba(30, 75, 117, 0.1);
+}
+
+.eeppj-num {
+  font-family: var(--pq-font-mono);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.eeppj-num-zero {
+  font-family: var(--pq-font-mono);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--pq-text-tertiary);
+}
+
+.eeppj-back-link {
+  display: inline-block;
+  font-family: var(--pq-font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--pq-text-secondary);
+  text-decoration: none;
+  margin-bottom: 0.5rem;
+  padding: 4px 0;
+  transition: color 0.12s ease;
+}
+
+.eeppj-back-link:hover {
+  color: var(--pq-accent);
+}

@@ -24,6 +24,7 @@ require_once EEPPJ_PQRRS_PATH . 'includes/class-pqrrs-handler.php';
 require_once EEPPJ_PQRRS_PATH . 'includes/class-pqrrs-form.php';
 require_once EEPPJ_PQRRS_PATH . 'includes/class-pqrrs-admin.php';
 require_once EEPPJ_PQRRS_PATH . 'includes/class-pqrrs-email.php';
+require_once EEPPJ_PQRRS_PATH . 'includes/class-pqrrs-reports.php';
 
 /* ====== Activation: create DB table ====== */
 function eeppj_pqrrs_activate() {
@@ -95,6 +96,7 @@ function eeppj_pqrrs_init() {
     EEPPJ_PQRRS_Form::init();
     EEPPJ_PQRRS_Handler::init();
     EEPPJ_PQRRS_Admin::init();
+    EEPPJ_PQRRS_Reports::init();
 }
 add_action('init', 'eeppj_pqrrs_init');
 
