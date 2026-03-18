@@ -17,7 +17,9 @@ class EEPPJ_PQRRS_Form {
         if (!is_singular()) return;
 
         global $post;
-        if (!has_shortcode($post->post_content ?? '', 'eeppj_pqrrs')) return;
+        $has_shortcode = has_shortcode($post->post_content ?? '', 'eeppj_pqrrs');
+        $has_template  = get_page_template_slug($post) === 'page-pqrrs.php';
+        if (!$has_shortcode && !$has_template) return;
 
         wp_enqueue_style(
             'eeppj-pqrrs-form',
