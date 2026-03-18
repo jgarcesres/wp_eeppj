@@ -3,7 +3,7 @@
  * Plugin Name: EEPPJ PQRRS
  * Plugin URI: https://github.com/jgarcesres/wp_eeppj
  * Description: PQRRS (Peticiones, Quejas, Reclamos, Recursos, Sugerencias) form handler for Empresas Públicas de Jericó. Provides form shortcode, Turnstile CAPTCHA, file upload validation, admin panel, and email notifications.
- * Version: 1.3.0
+ * Version: 1.4.0
  * Requires at least: 5.6
  * Requires PHP: 7.4
  * Author: EEPPJ
@@ -13,7 +13,7 @@
 
 defined('ABSPATH') || exit;
 
-define('EEPPJ_PQRRS_VERSION', '1.3.0');
+define('EEPPJ_PQRRS_VERSION', '1.4.0');
 define('EEPPJ_PQRRS_PATH', plugin_dir_path(__FILE__));
 define('EEPPJ_PQRRS_URL', plugin_dir_url(__FILE__));
 
