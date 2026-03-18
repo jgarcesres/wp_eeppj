@@ -88,8 +88,9 @@
   }
 
   function escHtml(str) {
+    if (str == null) return '';
     var el = document.createElement('span');
-    el.textContent = str;
+    el.textContent = String(str);
     return el.innerHTML;
   }
 

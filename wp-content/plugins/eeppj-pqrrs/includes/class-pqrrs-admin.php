@@ -417,7 +417,7 @@ class EEPPJ_PQRRS_Admin {
               // Archivo
               var archivoRow = document.getElementById('modal-archivo-row');
               var archivoTd = document.getElementById('modal-archivo');
-              if(btn.dataset.archivo){
+              if(btn.dataset.archivo && btn.dataset.archivo.indexOf('http') === 0){
                 archivoRow.style.display = '';
                 archivoTd.textContent = '';
                 var link = document.createElement('a');

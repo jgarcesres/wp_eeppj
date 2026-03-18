@@ -220,7 +220,8 @@ add_action('wp_enqueue_scripts', 'eeppj_enqueue_assets');
 
 /* ====== Security Headers ====== */
 function eeppj_security_headers() {
-    if (headers_sent()) {
+    if (headers_sent($file, $line)) {
+        error_log(sprintf('EEPPJ: Security headers not sent — output already started in %s on line %d', $file, $line));
         return;
     }
     header('X-Content-Type-Options: nosniff');
