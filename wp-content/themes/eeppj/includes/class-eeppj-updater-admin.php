@@ -113,19 +113,32 @@ class EEPPJ_Updater_Admin {
             return null;
         }
 
-        // Find the most recent release containing this component's asset
+        // Find the release with the highest version containing this component's asset
+        $best_release = null;
+        $best_version = '0.0.0';
+
         foreach ($releases as $release) {
             if (empty($release['tag_name']) || empty($release['assets'])) {
                 continue;
             }
+            $has_asset = false;
             foreach ($release['assets'] as $asset) {
                 if (isset($asset['name']) && $asset['name'] === $component['asset']) {
-                    return $release;
+                    $has_asset = true;
+                    break;
                 }
+            }
+            if (!$has_asset) {
+                continue;
+            }
+            $ver = $this->parse_version($release);
+            if ($ver && version_compare($ver, $best_version, '>')) {
+                $best_version = $ver;
+                $best_release = $release;
             }
         }
 
-        return null;
+        return $best_release;
     }
 
     private function parse_version($release) {
