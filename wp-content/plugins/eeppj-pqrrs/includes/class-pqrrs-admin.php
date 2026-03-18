@@ -12,10 +12,10 @@ defined('ABSPATH') || exit;
 class EEPPJ_PQRRS_Admin {
 
     private static $statuses = [
-        'pendiente'   => ['label' => 'Pendiente',   'color' => '#d97706', 'bg' => '#fffbeb', 'icon' => '&#9679;'],
-        'en_progreso' => ['label' => 'En Progreso',  'color' => '#2563eb', 'bg' => '#eff6ff', 'icon' => '&#8635;'],
-        'completada'  => ['label' => 'Completada',   'color' => '#16a34a', 'bg' => '#f0fdf4', 'icon' => '&#10003;'],
-        'descartada'  => ['label' => 'Descartada',   'color' => '#6b7280', 'bg' => '#f3f4f6', 'icon' => '&#10005;'],
+        'pendiente'   => ['label' => 'Pendiente',   'color' => '#d97706', 'bg' => '#fffbeb', 'icon' => "\u{25CF}"],
+        'en_progreso' => ['label' => 'En Progreso',  'color' => '#2563eb', 'bg' => '#eff6ff', 'icon' => "\u{21BB}"],
+        'completada'  => ['label' => 'Completada',   'color' => '#16a34a', 'bg' => '#f0fdf4', 'icon' => "\u{2713}"],
+        'descartada'  => ['label' => 'Descartada',   'color' => '#6b7280', 'bg' => '#f3f4f6', 'icon' => "\u{2715}"],
     ];
 
     // Valid transitions: current_status => [allowed next statuses]
@@ -301,7 +301,7 @@ class EEPPJ_PQRRS_Admin {
                       </select>
                     <?php else : ?>
                       <span class="eeppj-status-badge" style="color:<?php echo esc_attr($st['color']); ?>;background:<?php echo esc_attr($st['bg']); ?>;">
-                        <?php echo $st['icon'] . ' ' . esc_html($st['label']); ?>
+                        <?php echo esc_html($st['icon'] . ' ' . $st['label']); ?>
                       </span>
                     <?php endif; ?>
                   </td>
@@ -408,7 +408,7 @@ class EEPPJ_PQRRS_Admin {
               var bar = document.getElementById('modal-status-bar');
               bar.style.background = st.bg;
               bar.style.border = '1px solid ' + st.color + '33';
-              document.getElementById('modal-status-text').innerHTML = st.icon + ' ' + st.label;
+              document.getElementById('modal-status-text').textContent = st.icon + ' ' + st.label;
               document.getElementById('modal-status-text').style.color = st.color;
 
               var updated = btn.dataset.updated;
@@ -419,7 +419,13 @@ class EEPPJ_PQRRS_Admin {
               var archivoTd = document.getElementById('modal-archivo');
               if(btn.dataset.archivo){
                 archivoRow.style.display = '';
-                archivoTd.innerHTML = '<a href="'+btn.dataset.archivo+'" target="_blank" class="button button-small">Descargar</a>';
+                archivoTd.textContent = '';
+                var link = document.createElement('a');
+                link.href = btn.dataset.archivo;
+                link.target = '_blank';
+                link.className = 'button button-small';
+                link.textContent = 'Descargar';
+                archivoTd.appendChild(link);
               } else {
                 archivoRow.style.display = 'none';
               }

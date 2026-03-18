@@ -218,6 +218,18 @@ function eeppj_enqueue_assets() {
 }
 add_action('wp_enqueue_scripts', 'eeppj_enqueue_assets');
 
+/* ====== Security Headers ====== */
+function eeppj_security_headers() {
+    if (headers_sent()) {
+        return;
+    }
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: SAMEORIGIN');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
+}
+add_action('send_headers', 'eeppj_security_headers');
+
 /* ====== Custom Nav Walker for Dropdowns ====== */
 class EEPPJ_Nav_Walker extends Walker_Nav_Menu {
     private $current_item_has_children = false;

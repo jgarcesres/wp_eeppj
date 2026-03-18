@@ -272,8 +272,6 @@ class EEPPJ_Carousel_GitHub_Updater {
         }
 
         return $best_release;
-
-        return null;
     }
 
     /**
@@ -323,7 +321,11 @@ class EEPPJ_Carousel_GitHub_Updater {
 
         foreach ($release['assets'] as $asset) {
             if (isset($asset['name']) && $asset['name'] === $this->asset_name) {
-                return isset($asset['browser_download_url']) ? $asset['browser_download_url'] : null;
+                $url = isset($asset['browser_download_url']) ? $asset['browser_download_url'] : null;
+                if ($url && strpos($url, 'https://github.com/') !== 0) {
+                    return null;
+                }
+                return $url;
             }
         }
 

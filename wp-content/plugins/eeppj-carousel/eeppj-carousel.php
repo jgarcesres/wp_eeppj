@@ -64,6 +64,16 @@ function eeppj_carousel_register_block() {
             'slides' => [
                 'type'    => 'array',
                 'default' => [],
+                'items'   => [
+                    'type'       => 'object',
+                    'properties' => [
+                        'headline'    => ['type' => 'string'],
+                        'description' => ['type' => 'string'],
+                        'mediaUrl'    => ['type' => 'string'],
+                        'mediaId'     => ['type' => 'integer'],
+                        'mediaType'   => ['type' => 'string'],
+                    ],
+                ],
             ],
             'autoplayDuration' => [
                 'type'    => 'number',
