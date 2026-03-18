@@ -26,7 +26,7 @@ while (have_posts()) : the_post();
       <?php endforeach; ?>
     </div>
     <h1 style="font-size: 1.875rem; font-family: var(--font-heading); font-weight: 700; color: var(--color-brand-blue-dark); line-height: 1.25;" class="single-title">
-      <?php the_title(); ?>
+      <?php echo esc_html(get_the_title()); ?>
     </h1>
   </div>
 
