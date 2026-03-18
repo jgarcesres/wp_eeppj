@@ -108,7 +108,7 @@ add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'eeppj_pqrrs_sett
 
 /* ====== GitHub Auto-Updater ====== */
 require_once EEPPJ_PQRRS_PATH . 'includes/class-github-updater.php';
-new EEPPJ_GitHub_Updater(
+new EEPPJ_PQRRS_GitHub_Updater(
     'eeppj-pqrrs/eeppj-pqrrs.php',
     'jgarcesres/wp_eeppj',
     EEPPJ_PQRRS_VERSION,

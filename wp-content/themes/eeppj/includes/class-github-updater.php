@@ -15,11 +15,7 @@ if (!defined('ABSPATH')) {
 }
 // @codeCoverageIgnoreEnd
 
-if (class_exists('EEPPJ_GitHub_Updater')) {
-    return;
-}
-
-class EEPPJ_GitHub_Updater {
+class EEPPJ_Theme_GitHub_Updater {
 
     /** @var string Plugin slug (e.g. 'eeppj-pqrrs/eeppj-pqrrs.php') or theme slug (e.g. 'eeppj'). */
     private $slug;

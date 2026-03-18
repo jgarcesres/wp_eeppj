@@ -84,7 +84,7 @@ add_action('init', 'eeppj_carousel_register_block');
 
 /* ====== GitHub Auto-Updater ====== */
 require_once EEPPJ_CAROUSEL_PATH . 'includes/class-github-updater.php';
-new EEPPJ_GitHub_Updater(
+new EEPPJ_Carousel_GitHub_Updater(
     'eeppj-carousel/eeppj-carousel.php',
     'jgarcesres/wp_eeppj',
     EEPPJ_CAROUSEL_VERSION,

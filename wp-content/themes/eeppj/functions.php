@@ -402,7 +402,7 @@ function eeppj_doc_icon($type) {
 
 /* ====== GitHub Auto-Updater ====== */
 require_once get_template_directory() . '/includes/class-github-updater.php';
-new EEPPJ_GitHub_Updater(
+new EEPPJ_Theme_GitHub_Updater(
     'eeppj',
     'jgarcesres/wp_eeppj',
     wp_get_theme()->get('Version'),
