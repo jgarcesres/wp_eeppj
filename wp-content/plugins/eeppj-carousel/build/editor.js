@@ -50,11 +50,15 @@
         }
       }, []);
 
-      function updateSlide(index, field, value) {
+      function updateSlide(index, fieldOrObj, value) {
         var updated = slides.map(function (s, i) {
           if (i === index) {
             var copy = Object.assign({}, s);
-            copy[field] = value;
+            if (typeof fieldOrObj === 'object') {
+              Object.assign(copy, fieldOrObj);
+            } else {
+              copy[fieldOrObj] = value;
+            }
             return copy;
           }
           return s;
@@ -196,9 +200,7 @@
           el(MediaUpload, {
             onSelect: function (media) {
               var type = (media.type || '').startsWith('video') ? 'video' : 'image';
-              updateSlide(i, 'mediaUrl', media.url);
-              updateSlide(i, 'mediaId', media.id);
-              updateSlide(i, 'mediaType', type);
+              updateSlide(i, { mediaUrl: media.url, mediaId: media.id, mediaType: type });
             },
             allowedTypes: ['image', 'video'],
             value: slide.mediaId || 0,
@@ -223,8 +225,7 @@
                       isDestructive: true,
                       isSmall: true,
                       onClick: function () {
-                        updateSlide(i, 'mediaUrl', '');
-                        updateSlide(i, 'mediaId', 0);
+                        updateSlide(i, { mediaUrl: '', mediaId: 0 });
                       },
                     }, 'Quitar')
                   )
