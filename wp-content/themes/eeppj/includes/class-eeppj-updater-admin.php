@@ -52,7 +52,7 @@ class EEPPJ_Updater_Admin {
         add_management_page(
             'EEPPJ Updates',
             'EEPPJ Updates',
-            'update_plugins',
+            'manage_options',
             'eeppj-updates',
             array($this, 'render_page')
         );
@@ -75,12 +75,14 @@ class EEPPJ_Updater_Admin {
         return !empty($data['Version']) ? $data['Version'] : null;
     }
 
-    private function get_latest_release_info($component) {
+    private function get_latest_release_info($component, $force_refresh = false) {
         $transient_key = 'eeppj_gh_update_' . md5($component['slug']);
-        $cached = get_transient($transient_key);
 
-        if ($cached !== false) {
-            return $cached;
+        if (!$force_refresh) {
+            $cached = get_transient($transient_key);
+            if ($cached !== false) {
+                return $cached;
+            }
         }
 
         $url = 'https://api.github.com/repos/jgarcesres/wp_eeppj/releases/latest';
@@ -122,7 +124,11 @@ class EEPPJ_Updater_Admin {
         }
         foreach ($release['assets'] as $asset) {
             if (isset($asset['name']) && $asset['name'] === $asset_name) {
-                return isset($asset['browser_download_url']) ? $asset['browser_download_url'] : null;
+                $url = isset($asset['browser_download_url']) ? $asset['browser_download_url'] : null;
+                if ($url && wp_parse_url($url, PHP_URL_HOST) === 'github.com') {
+                    return esc_url_raw($url);
+                }
+                return null;
             }
         }
         return null;
@@ -131,17 +137,21 @@ class EEPPJ_Updater_Admin {
     public function ajax_check_updates() {
         check_ajax_referer('eeppj_updates_nonce', 'nonce');
 
-        if (!current_user_can('update_plugins')) {
+        if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
 
-        // Clear all EEPPJ transients to force fresh check
-        foreach ($this->components as $c) {
-            delete_transient('eeppj_gh_update_' . md5($c['slug']));
+        $force = !empty($_POST['force']);
+
+        // Only clear transients when explicitly forced
+        if ($force) {
+            foreach ($this->components as $c) {
+                delete_transient('eeppj_gh_update_' . md5($c['slug']));
+            }
         }
 
-        // Fetch fresh release data
-        $release = $this->get_latest_release_info($this->components[0]);
+        // Fetch release data (uses cache unless forced)
+        $release = $this->get_latest_release_info($this->components[0], $force);
         $remote_version = $release ? $this->parse_version($release) : null;
 
         $results = array();
@@ -156,8 +166,9 @@ class EEPPJ_Updater_Admin {
                 'name'             => $c['name'],
                 'slug'             => $c['slug'],
                 'type'             => $c['type'],
-                'installed'        => $current ? $current : 'Not installed',
-                'remote'           => $remote_version ? $remote_version : 'Unknown',
+                'installed'        => $current,
+                'is_installed'     => $current !== null,
+                'remote'           => $remote_version,
                 'update_available' => $update_available,
                 'has_asset'        => $has_asset,
             );
@@ -165,7 +176,7 @@ class EEPPJ_Updater_Admin {
 
         wp_send_json_success(array(
             'components'     => $results,
-            'release_url'    => $release ? $release['html_url'] : null,
+            'release_url'    => $release ? esc_url($release['html_url']) : null,
             'release_name'   => $release ? ($release['name'] ? $release['name'] : $release['tag_name']) : null,
             'published_at'   => $release ? $release['published_at'] : null,
         ));
@@ -174,12 +185,12 @@ class EEPPJ_Updater_Admin {
     public function ajax_apply_update() {
         check_ajax_referer('eeppj_updates_nonce', 'nonce');
 
-        if (!current_user_can('update_plugins')) {
+        if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'Permisos insuficientes.'));
         }
 
-        $slug = isset($_POST['component_slug']) ? sanitize_text_field($_POST['component_slug']) : '';
-        $type = isset($_POST['component_type']) ? sanitize_text_field($_POST['component_type']) : '';
+        $slug = isset($_POST['component_slug']) ? sanitize_text_field(wp_unslash($_POST['component_slug'])) : '';
+        $type = isset($_POST['component_type']) ? sanitize_text_field(wp_unslash($_POST['component_type'])) : '';
 
         $component = null;
         foreach ($this->components as $c) {
@@ -196,7 +207,7 @@ class EEPPJ_Updater_Admin {
         // Clear transient to get fresh data
         delete_transient('eeppj_gh_update_' . md5($slug));
 
-        $release = $this->get_latest_release_info($component);
+        $release = $this->get_latest_release_info($component, true);
         if (!$release) {
             wp_send_json_error(array('message' => 'No se pudo contactar GitHub.'));
         }
@@ -207,6 +218,9 @@ class EEPPJ_Updater_Admin {
         }
 
         $remote_version = $this->parse_version($release);
+        if (!$remote_version) {
+            wp_send_json_error(array('message' => 'No se pudo determinar la versión del release.'));
+        }
 
         // Inject update info into WP transient so the upgrader can find it
         if ($type === 'plugin') {
@@ -310,6 +324,10 @@ class EEPPJ_Updater_Admin {
             var nonce = <?php echo wp_json_encode($nonce); ?>;
             var ajaxUrl = <?php echo wp_json_encode(admin_url('admin-ajax.php')); ?>;
 
+            function esc(str) {
+                return $('<span>').text(str || '').html();
+            }
+
             function showLog(message, type) {
                 var $log = $('#eeppj-update-log');
                 var colors = {
@@ -318,20 +336,21 @@ class EEPPJ_Updater_Admin {
                     info:    { bg: '#eff6ff', border: '#2563eb', color: '#1e40af' }
                 };
                 var c = colors[type] || colors.info;
-                $log.html(message)
+                $log.text(message)
                     .css({ display: 'block', background: c.bg, borderLeft: '4px solid ' + c.border, color: c.color })
                     .hide().fadeIn(200);
             }
 
-            $('#eeppj-check-btn').on('click', function() {
-                var $btn = $(this);
+            function doCheck(force) {
+                var $btn = $('#eeppj-check-btn');
                 $btn.prop('disabled', true);
                 $('#eeppj-check-spinner').addClass('is-active');
                 $('#eeppj-update-log').hide();
 
                 $.post(ajaxUrl, {
                     action: 'eeppj_check_updates',
-                    nonce: nonce
+                    nonce: nonce,
+                    force: force ? 1 : 0
                 }, function(res) {
                     $btn.prop('disabled', false);
                     $('#eeppj-check-spinner').removeClass('is-active');
@@ -346,48 +365,61 @@ class EEPPJ_Updater_Admin {
                     // Release info
                     if (d.release_name) {
                         var date = d.published_at ? new Date(d.published_at).toLocaleDateString('es-CO') : '';
-                        $('#eeppj-release-info').html(
-                            '<strong>Último release:</strong> ' + $('<span>').text(d.release_name).html() +
-                            (date ? ' &mdash; ' + date : '') +
-                            (d.release_url ? ' &mdash; <a href="' + d.release_url + '" target="_blank">Ver en GitHub ↗</a>' : '')
-                        ).show();
+                        var $info = $('#eeppj-release-info').empty();
+                        $info.append($('<strong>').text('Último release: '));
+                        $info.append(document.createTextNode(d.release_name));
+                        if (date) {
+                            $info.append(document.createTextNode(' — ' + date));
+                        }
+                        if (d.release_url) {
+                            $info.append(document.createTextNode(' — '));
+                            $info.append($('<a>').attr({ href: d.release_url, target: '_blank', rel: 'noopener noreferrer' }).text('Ver en GitHub ↗'));
+                        }
+                        $info.show();
                     }
 
                     // Components table
                     var $tbody = $('#eeppj-components-body').empty();
                     $.each(d.components, function(i, c) {
-                        var statusHtml, actionHtml;
-                        if (c.installed === 'Not installed') {
-                            statusHtml = '<span style="color:#9ca3af;">No instalado</span>';
-                            actionHtml = '—';
+                        var $tr = $('<tr>');
+                        $tr.append($('<td>').append($('<strong>').text(c.name)));
+                        $tr.append($('<td>').text(c.type === 'theme' ? 'Tema' : 'Plugin'));
+                        $tr.append($('<td>').append($('<code>').text(c.is_installed ? c.installed : 'No instalado')));
+                        $tr.append($('<td>').append($('<code>').text(c.remote || 'Desconocida')));
+
+                        var $status = $('<td>');
+                        var $action = $('<td>');
+
+                        if (!c.is_installed) {
+                            $status.append($('<span>').css('color', '#9ca3af').text('No instalado'));
+                            $action.text('—');
                         } else if (c.update_available) {
-                            statusHtml = '<span style="color:#d97706; font-weight:600;">Actualización disponible</span>';
-                            actionHtml = '<button type="button" class="button button-primary eeppj-update-btn" ' +
-                                'data-slug="' + c.slug + '" data-type="' + c.type + '" data-name="' + c.name + '">' +
-                                'Actualizar</button>';
+                            $status.append($('<span>').css({ color: '#d97706', fontWeight: '600' }).text('Actualización disponible'));
+                            $action.append(
+                                $('<button>').addClass('button button-primary eeppj-update-btn')
+                                    .attr({ 'data-slug': c.slug, 'data-type': c.type, 'data-name': c.name })
+                                    .text('Actualizar')
+                            );
                         } else {
-                            statusHtml = '<span style="color:#16a34a;">Al día ✓</span>';
-                            actionHtml = '—';
+                            $status.append($('<span>').css('color', '#16a34a').text('Al día ✓'));
+                            $action.text('—');
                         }
 
-                        $tbody.append(
-                            '<tr>' +
-                            '<td><strong>' + $('<span>').text(c.name).html() + '</strong></td>' +
-                            '<td>' + (c.type === 'theme' ? 'Tema' : 'Plugin') + '</td>' +
-                            '<td><code>' + c.installed + '</code></td>' +
-                            '<td><code>' + c.remote + '</code></td>' +
-                            '<td>' + statusHtml + '</td>' +
-                            '<td>' + actionHtml + '</td>' +
-                            '</tr>'
-                        );
+                        $tr.append($status).append($action);
+                        $tbody.append($tr);
                     });
                     $('#eeppj-components-table').show();
 
                 }).fail(function() {
-                    $btn.prop('disabled', false);
+                    $('#eeppj-check-btn').prop('disabled', false);
                     $('#eeppj-check-spinner').removeClass('is-active');
                     showLog('Error de conexión al verificar actualizaciones.', 'error');
                 });
+            }
+
+            // Explicit button click forces cache clear
+            $('#eeppj-check-btn').on('click', function() {
+                doCheck(true);
             });
 
             $(document).on('click', '.eeppj-update-btn', function() {
@@ -408,8 +440,10 @@ class EEPPJ_Updater_Admin {
                     if (res.success) {
                         showLog(res.data.message + (res.data.new_version ? ' (v' + res.data.new_version + ')' : ''), 'success');
                         $btn.closest('tr').find('td:eq(2) code').text(res.data.new_version || '?');
-                        $btn.closest('tr').find('td:eq(4)').html('<span style="color:#16a34a;">Al día ✓</span>');
-                        $btn.closest('td').html('—');
+                        $btn.closest('tr').find('td:eq(4)').empty().append(
+                            $('<span>').css('color', '#16a34a').text('Al día ✓')
+                        );
+                        $btn.closest('td').text('—');
                     } else {
                         showLog('Error: ' + (res.data.message || 'Error desconocido.'), 'error');
                         $btn.prop('disabled', false).text('Reintentar');
@@ -420,8 +454,8 @@ class EEPPJ_Updater_Admin {
                 });
             });
 
-            // Auto-check on page load
-            $('#eeppj-check-btn').trigger('click');
+            // Auto-check on page load (uses cache, no forced refresh)
+            doCheck(false);
 
         })(jQuery);
         </script>
