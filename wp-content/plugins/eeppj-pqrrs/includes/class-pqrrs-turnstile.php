@@ -18,10 +18,12 @@ class EEPPJ_PQRRS_Turnstile {
      * @return true|string  True if valid, error message if not
      */
     public static function verify($token, $ip = '') {
-        $secret  = get_option('eeppj_pqrrs_turnstile_secret');
-        $require = get_option('eeppj_pqrrs_require_turnstile', '1');
+        $secret   = get_option('eeppj_pqrrs_turnstile_secret');
+        $site_key = get_option('eeppj_pqrrs_turnstile_site_key');
+        $require  = get_option('eeppj_pqrrs_require_turnstile', '1');
+        $keys_missing = empty($secret) || empty($site_key);
 
-        if (empty($secret)) {
+        if ($keys_missing) {
             if ($require === '1') {
                 return 'CAPTCHA no configurado. Contacte al administrador del sitio.';
             }
