@@ -497,6 +497,11 @@ class EEPPJ_PQRRS_Reports {
 
         $full_export = isset($_GET['full']) && $_GET['full'] === '1';
 
+        if ($full_export) {
+            $current_user = wp_get_current_user();
+            error_log('EEPPJ PQRRS AUDIT: Full PII CSV export for ' . $mes . ' by user "' . $current_user->user_login . '" (ID ' . $current_user->ID . ') from IP ' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+        }
+
         $date_start = $mes . '-01';
         $date_end = date('Y-m-01', strtotime($date_start . ' +1 month'));
 

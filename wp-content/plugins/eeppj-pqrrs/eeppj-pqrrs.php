@@ -37,7 +37,7 @@ function eeppj_pqrrs_activate() {
         id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         submission_id VARCHAR(8) NOT NULL,
         nombre VARCHAR(255) NOT NULL,
-        cedula VARCHAR(20) DEFAULT '',
+        cedula VARCHAR(255) DEFAULT '',
         email VARCHAR(255) NOT NULL,
         telefono VARCHAR(20) DEFAULT '',
         tipo VARCHAR(20) NOT NULL,
@@ -60,7 +60,9 @@ function eeppj_pqrrs_activate() {
     update_option('eeppj_pqrrs_db_version', EEPPJ_PQRRS_VERSION);
 
     // Generate encryption key for PII fields
-    EEPPJ_PQRRS_Crypto::generate_key();
+    if (!EEPPJ_PQRRS_Crypto::generate_key()) {
+        error_log('EEPPJ PQRRS WARNING: Encryption key not generated during activation. Cedulas will be stored unencrypted.');
+    }
 
     // Schedule retention cron
     if (!wp_next_scheduled('eeppj_pqrrs_retention_cron')) {
@@ -116,6 +118,10 @@ function eeppj_pqrrs_check_db_upgrade() {
 
         // Widen cedula column for encrypted values (~120 chars)
         $wpdb->query("ALTER TABLE $table MODIFY cedula VARCHAR(255) DEFAULT ''");
+        if ($wpdb->last_error) {
+            error_log('EEPPJ PQRRS CRITICAL: Failed to widen cedula column: ' . $wpdb->last_error);
+            return; // Do NOT mark migration complete — encrypted values would be truncated
+        }
 
         // Generate encryption key if not present
         EEPPJ_PQRRS_Crypto::generate_key();
@@ -123,12 +129,23 @@ function eeppj_pqrrs_check_db_upgrade() {
         // Encrypt existing plaintext cedulas in batches
         if (EEPPJ_PQRRS_Crypto::is_configured()) {
             $batch_size = 50;
+            $max_iterations = 1000;
+            $iteration = 0;
             do {
+                if (++$iteration > $max_iterations) {
+                    error_log('EEPPJ PQRRS: Migration batch encryption exceeded ' . $max_iterations . ' iterations. Some cedulas may remain unencrypted.');
+                    break;
+                }
                 $rows = $wpdb->get_results(
                     "SELECT id, cedula FROM $table WHERE cedula != '' AND cedula NOT LIKE '%:%:%' AND cedula != '[ANONIMIZADO]' LIMIT $batch_size"
                 );
                 foreach ($rows as $row) {
                     $encrypted = EEPPJ_PQRRS_Crypto::encrypt($row->cedula);
+                    // If encrypt returned plaintext (no ':'), stop to avoid infinite loop
+                    if (strpos($encrypted, ':') === false) {
+                        error_log('EEPPJ PQRRS: Encryption failed during migration for record ID ' . $row->id . '. Stopping batch.');
+                        break 2;
+                    }
                     $wpdb->update($table, array('cedula' => $encrypted), array('id' => $row->id), array('%s'), array('%d'));
                 }
             } while (count($rows) === $batch_size);
@@ -174,13 +191,17 @@ function eeppj_pqrrs_run_retention() {
     }
 
     $count = 0;
+    $failed = 0;
     foreach ($rows as $row) {
         // Delete attachment if exists
         if ($row->archivo_id) {
-            wp_delete_attachment($row->archivo_id, true);
+            $deleted = wp_delete_attachment($row->archivo_id, true);
+            if (!$deleted) {
+                error_log('EEPPJ PQRRS: Retention cron failed to delete attachment ID ' . $row->archivo_id . ' for record ID ' . $row->id);
+            }
         }
 
-        $wpdb->update(
+        $result = $wpdb->update(
             $table,
             array(
                 'nombre'     => '[ANONIMIZADO]',
@@ -194,13 +215,20 @@ function eeppj_pqrrs_run_retention() {
             array('%s', '%s', '%s', '%s', '%s', '%s'),
             array('%d')
         );
+
+        if ($result === false) {
+            error_log('EEPPJ PQRRS: Retention cron FAILED to anonymize record ID ' . $row->id . ': ' . $wpdb->last_error);
+            $failed++;
+            continue;
+        }
+
         // Null out archivo_id separately (wpdb->update can't mix NULL with format strings)
         $wpdb->query($wpdb->prepare("UPDATE $table SET archivo_id = NULL WHERE id = %d", $row->id));
         $count++;
     }
 
-    if ($count > 0) {
-        error_log('EEPPJ PQRRS: Retention cron anonymized ' . $count . ' record(s).');
+    if ($count > 0 || $failed > 0) {
+        error_log('EEPPJ PQRRS: Retention cron completed — anonymized ' . $count . ', failed ' . $failed . '.');
     }
 }
 add_action('eeppj_pqrrs_retention_cron', 'eeppj_pqrrs_run_retention');
