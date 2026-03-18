@@ -217,11 +217,11 @@ get_header();
 
   @media (min-width: 1024px) {
     .pqrrs-layout {
-      grid-template-columns: 1fr 22rem;
+      grid-template-columns: 22rem 1fr;
       gap: 2.5rem;
       align-items: start;
     }
-    /* Desktop: sidebar left, form right (visual), but form still first in DOM for mobile */
+    /* Desktop: sidebar left (narrow), form right (wide) */
     .pqrrs-form-col { order: 2; }
     .pqrrs-sidebar {
       order: 1;
@@ -232,7 +232,7 @@ get_header();
 
   @media (min-width: 1280px) {
     .pqrrs-layout {
-      grid-template-columns: 1fr 24rem;
+      grid-template-columns: 24rem 1fr;
       gap: 3rem;
     }
   }

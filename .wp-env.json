@@ -1,0 +1,17 @@
+{
+  "core": "WordPress/WordPress#6.8",
+  "phpVersion": "7.4",
+  "themes": [
+    "./wp-content/themes/eeppj"
+  ],
+  "plugins": [
+    "./wp-content/plugins/eeppj-pqrrs",
+    "./wp-content/plugins/eeppj-carousel"
+  ],
+  "config": {
+    "WP_DEBUG": true,
+    "WP_DEBUG_LOG": true
+  },
+  "port": 8888,
+  "testsPort": 8889
+}

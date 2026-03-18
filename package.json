@@ -1,0 +1,14 @@
+{
+  "name": "wp-eeppj-ci",
+  "private": true,
+  "scripts": {
+    "wp-env": "wp-env",
+    "test:smoke": "bash tests/smoke.sh",
+    "test:visual": "npx playwright test tests/visual.spec.js",
+    "test:e2e": "npx playwright test tests/e2e.spec.js"
+  },
+  "devDependencies": {
+    "@wordpress/env": "^10.0.0",
+    "@playwright/test": "^1.48.0"
+  }
+}

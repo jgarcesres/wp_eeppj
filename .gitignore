@@ -12,5 +12,10 @@ db_data/
 # Internal docs (migration plans, credentials, client notes)
 docs/internal/
 
-# Node (if we add build tools later)
+# Node
 node_modules/
+
+# Testing
+tests/screenshots/
+test-results/
+playwright-report/
