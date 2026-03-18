@@ -65,7 +65,7 @@ get_header();
           ];
           foreach ($types as $t) : ?>
             <div class="pqrrs-type-item">
-              <span class="pqrrs-type-letter" style="background: <?php echo $t['bg']; ?>; color: <?php echo $t['color']; ?>;"><?php echo $t['letter']; ?></span>
+              <span class="pqrrs-type-letter" style="background: <?php echo esc_attr($t['bg']); ?>; color: <?php echo esc_attr($t['color']); ?>;"><?php echo esc_html($t['letter']); ?></span>
               <div>
                 <p class="pqrrs-type-name"><?php echo esc_html($t['name']); ?></p>
                 <p class="pqrrs-type-desc"><?php echo esc_html($t['desc']); ?></p>

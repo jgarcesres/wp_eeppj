@@ -49,7 +49,7 @@ class EEPPJ_PQRRS_Email {
         // Optional webhook (Discord/Slack)
         $webhook_url = get_option('eeppj_pqrrs_webhook_url');
         if (!empty($webhook_url)) {
-            wp_remote_post($webhook_url, [
+            wp_safe_remote_post($webhook_url, [
                 'headers' => ['Content-Type' => 'application/json'],
                 'body'    => wp_json_encode([
                     'content' => sprintf(

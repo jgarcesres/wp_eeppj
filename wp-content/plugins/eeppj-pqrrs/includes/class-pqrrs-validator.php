@@ -75,6 +75,20 @@ class EEPPJ_PQRRS_Validator {
             return 'El contenido del archivo no coincide con su tipo declarado.';
         }
 
+        // For DOCX: verify it's actually an OOXML document, not just any ZIP file.
+        if ($ext === 'docx') {
+            $zip = new ZipArchive();
+            if ($zip->open($file['tmp_name']) === true) {
+                $has_content_types = ($zip->locateName('[Content_Types].xml') !== false);
+                $zip->close();
+                if (!$has_content_types) {
+                    return 'El archivo DOCX no es válido.';
+                }
+            } else {
+                return 'No se pudo verificar el archivo DOCX.';
+            }
+        }
+
         return true;
     }
 }
