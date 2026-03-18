@@ -80,16 +80,27 @@ class EEPPJ_PQRRS_Admin {
         register_setting('eeppj_pqrrs_settings', 'eeppj_pqrrs_turnstile_site_key');
         register_setting('eeppj_pqrrs_settings', 'eeppj_pqrrs_turnstile_secret');
         register_setting('eeppj_pqrrs_settings', 'eeppj_pqrrs_require_turnstile', [
-            'type' => 'string', 'default' => '1', 'sanitize_callback' => 'sanitize_text_field',
+            'type' => 'string', 'default' => '1',
+            'sanitize_callback' => array(__CLASS__, 'sanitize_require_turnstile'),
         ]);
         register_setting('eeppj_pqrrs_settings', 'eeppj_pqrrs_trusted_ip_header', [
-            'type' => 'string', 'default' => '', 'sanitize_callback' => 'sanitize_text_field',
+            'type' => 'string', 'default' => '',
+            'sanitize_callback' => array(__CLASS__, 'sanitize_trusted_header'),
         ]);
         register_setting('eeppj_pqrrs_settings', 'eeppj_pqrrs_notification_email');
         register_setting('eeppj_pqrrs_settings', 'eeppj_pqrrs_webhook_url');
         register_setting('eeppj_pqrrs_settings', 'eeppj_pqrrs_max_upload', [
             'type' => 'integer', 'default' => 5, 'sanitize_callback' => 'absint',
         ]);
+    }
+
+    public static function sanitize_require_turnstile($value) {
+        return ($value === '1') ? '1' : '0';
+    }
+
+    public static function sanitize_trusted_header($value) {
+        $allowed = array('', 'HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR');
+        return in_array($value, $allowed, true) ? $value : '';
     }
 
     public static function enqueue_admin_styles($hook) {
@@ -117,6 +128,7 @@ class EEPPJ_PQRRS_Admin {
                 <th>Requerir Turnstile</th>
                 <td>
                   <label>
+                    <input type="hidden" name="eeppj_pqrrs_require_turnstile" value="0" />
                     <input type="checkbox" name="eeppj_pqrrs_require_turnstile" value="1" <?php checked(get_option('eeppj_pqrrs_require_turnstile', '1'), '1'); ?> />
                     Exigir verificación CAPTCHA en el formulario
                   </label>

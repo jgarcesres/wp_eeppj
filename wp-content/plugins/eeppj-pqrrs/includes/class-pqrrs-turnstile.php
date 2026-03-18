@@ -43,12 +43,15 @@ class EEPPJ_PQRRS_Turnstile {
         ]);
 
         if (is_wp_error($response)) {
+            error_log('EEPPJ PQRRS Turnstile verification failed: ' . $response->get_error_message());
             return 'Error al verificar CAPTCHA. Intente de nuevo.';
         }
 
         $body = json_decode(wp_remote_retrieve_body($response), true);
 
         if (empty($body['success'])) {
+            $error_codes = isset($body['error-codes']) ? implode(', ', $body['error-codes']) : 'unknown';
+            error_log('EEPPJ PQRRS Turnstile rejected token. Error codes: ' . $error_codes);
             return 'Verificación CAPTCHA fallida. Intente de nuevo.';
         }
 
