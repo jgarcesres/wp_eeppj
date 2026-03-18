@@ -423,6 +423,7 @@ class EEPPJ_PQRRS_Admin {
                 var link = document.createElement('a');
                 link.href = btn.dataset.archivo;
                 link.target = '_blank';
+                link.rel = 'noopener noreferrer';
                 link.className = 'button button-small';
                 link.textContent = 'Descargar';
                 archivoTd.appendChild(link);
