@@ -260,10 +260,10 @@ class EEPPJ_PQRRS_Reports {
         $total_pages = (int) ceil($total_filtered / $per_page);
 
         $base_url = admin_url('admin.php?page=eeppj-pqrrs-reports&mes=' . $mes);
-        $csv_url = wp_nonce_url(
-            admin_url('admin-post.php?action=eeppj_pqrrs_csv&mode=detail&mes=' . $mes),
-            'eeppj_pqrrs_csv'
-        );
+        $csv_params = 'admin-post.php?action=eeppj_pqrrs_csv&mode=detail&mes=' . $mes;
+        if ($filter_tipo) $csv_params .= '&tipo=' . $filter_tipo;
+        if ($filter_status) $csv_params .= '&status=' . $filter_status;
+        $csv_url = wp_nonce_url(admin_url($csv_params), 'eeppj_pqrrs_csv');
         ?>
         <div class="wrap eeppj-admin">
           <a href="<?php echo esc_url(admin_url('admin.php?page=eeppj-pqrrs-reports')); ?>" class="eeppj-back-link">&larr; Volver a reportes</a>
@@ -379,7 +379,7 @@ class EEPPJ_PQRRS_Reports {
 
     public static function handle_csv_export() {
         if (!current_user_can('manage_options') || !wp_verify_nonce($_GET['_wpnonce'] ?? '', 'eeppj_pqrrs_csv')) {
-            wp_die('No autorizado.', 403);
+            wp_die('No autorizado.', 'No autorizado', ['response' => 403]);
         }
 
         global $wpdb;
@@ -419,7 +419,7 @@ class EEPPJ_PQRRS_Reports {
         ));
 
         if ($wpdb->last_error) {
-            wp_die('Error de base de datos: ' . esc_html($wpdb->last_error), 500);
+            wp_die('Error de base de datos: ' . esc_html($wpdb->last_error), 'Error', ['response' => 500]);
         }
 
         $data = [];
@@ -441,7 +441,7 @@ class EEPPJ_PQRRS_Reports {
 
         $out = fopen('php://output', 'w');
         if ($out === false) {
-            wp_die('Error interno al generar el archivo CSV.', 500);
+            wp_die('Error interno al generar el archivo CSV.', 'Error', ['response' => 500]);
         }
         // UTF-8 BOM
         fwrite($out, "\xEF\xBB\xBF");
@@ -473,16 +473,29 @@ class EEPPJ_PQRRS_Reports {
         $date_start = $mes . '-01';
         $date_end = date('Y-m-01', strtotime($date_start . ' +1 month'));
 
-        $submissions = $wpdb->get_results($wpdb->prepare(
+        // Apply optional tipo/status filters (same as detail view)
+        $filter_tipo = sanitize_text_field($_GET['tipo'] ?? '');
+        $filter_status = sanitize_text_field($_GET['status'] ?? '');
+
+        $where_parts = [
+            $wpdb->prepare("created_at >= %s", $date_start),
+            $wpdb->prepare("created_at < %s", $date_end),
+        ];
+        if ($filter_tipo && in_array($filter_tipo, self::$tipos, true)) {
+            $where_parts[] = $wpdb->prepare("tipo = %s", $filter_tipo);
+        }
+        if ($filter_status && isset(self::$statuses[$filter_status])) {
+            $where_parts[] = $wpdb->prepare("status = %s", $filter_status);
+        }
+        $where = 'WHERE ' . implode(' AND ', $where_parts);
+
+        $submissions = $wpdb->get_results(
             "SELECT submission_id, tipo, nombre, cedula, email, telefono, asunto, status, created_at
-             FROM $table
-             WHERE created_at >= %s AND created_at < %s
-             ORDER BY created_at DESC",
-            $date_start, $date_end
-        ));
+             FROM $table $where ORDER BY created_at DESC"
+        );
 
         if ($wpdb->last_error) {
-            wp_die('Error de base de datos: ' . esc_html($wpdb->last_error), 500);
+            wp_die('Error de base de datos: ' . esc_html($wpdb->last_error), 'Error', ['response' => 500]);
         }
 
         $filename = 'pqrrs-detalle-' . $mes . '.csv';
@@ -490,7 +503,7 @@ class EEPPJ_PQRRS_Reports {
 
         $out = fopen('php://output', 'w');
         if ($out === false) {
-            wp_die('Error interno al generar el archivo CSV.', 500);
+            wp_die('Error interno al generar el archivo CSV.', 'Error', ['response' => 500]);
         }
         // UTF-8 BOM
         fwrite($out, "\xEF\xBB\xBF");
