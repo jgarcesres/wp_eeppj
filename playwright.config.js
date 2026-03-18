@@ -1,7 +1,7 @@
 const { defineConfig } = require('@playwright/test');
 
 module.exports = defineConfig({
-  testDir: '.',
+  testDir: './tests',
   testMatch: ['visual.spec.js', 'e2e.spec.js'],
   timeout: 30000,
   retries: 0,
