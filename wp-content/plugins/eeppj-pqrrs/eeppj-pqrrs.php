@@ -3,7 +3,7 @@
  * Plugin Name: EEPPJ PQRRS
  * Plugin URI: https://github.com/jgarcesres/wp_eeppj
  * Description: PQRRS (Peticiones, Quejas, Reclamos, Recursos, Sugerencias) form handler for Empresas Públicas de Jericó. Provides form shortcode, Turnstile CAPTCHA, file upload validation, admin panel, and email notifications.
- * Version: 1.4.0
+ * Version: 1.5.0
  * Requires at least: 5.6
  * Requires PHP: 7.4
  * Author: EEPPJ
@@ -13,11 +13,12 @@
 
 defined('ABSPATH') || exit;
 
-define('EEPPJ_PQRRS_VERSION', '1.4.0');
+define('EEPPJ_PQRRS_VERSION', '1.5.0');
 define('EEPPJ_PQRRS_PATH', plugin_dir_path(__FILE__));
 define('EEPPJ_PQRRS_URL', plugin_dir_url(__FILE__));
 
 // Autoload classes
+require_once EEPPJ_PQRRS_PATH . 'includes/class-pqrrs-crypto.php';
 require_once EEPPJ_PQRRS_PATH . 'includes/class-pqrrs-validator.php';
 require_once EEPPJ_PQRRS_PATH . 'includes/class-pqrrs-turnstile.php';
 require_once EEPPJ_PQRRS_PATH . 'includes/class-pqrrs-handler.php';
@@ -57,8 +58,25 @@ function eeppj_pqrrs_activate() {
     dbDelta($sql);
 
     update_option('eeppj_pqrrs_db_version', EEPPJ_PQRRS_VERSION);
+
+    // Generate encryption key for PII fields
+    EEPPJ_PQRRS_Crypto::generate_key();
+
+    // Schedule retention cron
+    if (!wp_next_scheduled('eeppj_pqrrs_retention_cron')) {
+        wp_schedule_event(time(), 'daily', 'eeppj_pqrrs_retention_cron');
+    }
 }
 register_activation_hook(__FILE__, 'eeppj_pqrrs_activate');
+
+/* ====== Deactivation: clear cron ====== */
+function eeppj_pqrrs_deactivate() {
+    $timestamp = wp_next_scheduled('eeppj_pqrrs_retention_cron');
+    if ($timestamp) {
+        wp_unschedule_event($timestamp, 'eeppj_pqrrs_retention_cron');
+    }
+}
+register_deactivation_hook(__FILE__, 'eeppj_pqrrs_deactivate');
 
 /* ====== DB migration for existing installs ====== */
 function eeppj_pqrrs_check_db_upgrade() {
@@ -87,9 +105,105 @@ function eeppj_pqrrs_check_db_upgrade() {
         }
 
         update_option('eeppj_pqrrs_db_version', '1.2.0');
+        $installed = '1.2.0';
+    }
+
+    if (version_compare($installed, '1.5.0', '<')) {
+        global $wpdb;
+        if (!isset($table)) {
+            $table = $wpdb->prefix . 'eeppj_pqrrs';
+        }
+
+        // Widen cedula column for encrypted values (~120 chars)
+        $wpdb->query("ALTER TABLE $table MODIFY cedula VARCHAR(255) DEFAULT ''");
+
+        // Generate encryption key if not present
+        EEPPJ_PQRRS_Crypto::generate_key();
+
+        // Encrypt existing plaintext cedulas in batches
+        if (EEPPJ_PQRRS_Crypto::is_configured()) {
+            $batch_size = 50;
+            do {
+                $rows = $wpdb->get_results(
+                    "SELECT id, cedula FROM $table WHERE cedula != '' AND cedula NOT LIKE '%:%:%' AND cedula != '[ANONIMIZADO]' LIMIT $batch_size"
+                );
+                foreach ($rows as $row) {
+                    $encrypted = EEPPJ_PQRRS_Crypto::encrypt($row->cedula);
+                    $wpdb->update($table, array('cedula' => $encrypted), array('id' => $row->id), array('%s'), array('%d'));
+                }
+            } while (count($rows) === $batch_size);
+        }
+
+        // Schedule retention cron for existing installs
+        if (!wp_next_scheduled('eeppj_pqrrs_retention_cron')) {
+            wp_schedule_event(time(), 'daily', 'eeppj_pqrrs_retention_cron');
+        }
+
+        update_option('eeppj_pqrrs_db_version', '1.5.0');
     }
 }
 add_action('admin_init', 'eeppj_pqrrs_check_db_upgrade');
+
+/* ====== Data retention cron handler ====== */
+function eeppj_pqrrs_run_retention() {
+    if (get_option('eeppj_pqrrs_retention_enabled', '1') !== '1') {
+        return;
+    }
+
+    $days = (int) get_option('eeppj_pqrrs_retention_days', 730);
+    if ($days < 30) {
+        $days = 730;
+    }
+
+    $cutoff = date('Y-m-d H:i:s', strtotime("-{$days} days"));
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'eeppj_pqrrs';
+
+    $rows = $wpdb->get_results($wpdb->prepare(
+        "SELECT id, archivo_id FROM $table
+         WHERE status IN ('completada', 'descartada')
+         AND created_at < %s
+         AND nombre != '[ANONIMIZADO]'
+         LIMIT 100",
+        $cutoff
+    ));
+
+    if (empty($rows)) {
+        return;
+    }
+
+    $count = 0;
+    foreach ($rows as $row) {
+        // Delete attachment if exists
+        if ($row->archivo_id) {
+            wp_delete_attachment($row->archivo_id, true);
+        }
+
+        $wpdb->update(
+            $table,
+            array(
+                'nombre'     => '[ANONIMIZADO]',
+                'cedula'     => '[ANONIMIZADO]',
+                'email'      => '[ANONIMIZADO]',
+                'telefono'   => '',
+                'ip_address' => '0.0.0.0',
+                'updated_at' => current_time('mysql'),
+            ),
+            array('id' => $row->id),
+            array('%s', '%s', '%s', '%s', '%s', '%s'),
+            array('%d')
+        );
+        // Null out archivo_id separately (wpdb->update can't mix NULL with format strings)
+        $wpdb->query($wpdb->prepare("UPDATE $table SET archivo_id = NULL WHERE id = %d", $row->id));
+        $count++;
+    }
+
+    if ($count > 0) {
+        error_log('EEPPJ PQRRS: Retention cron anonymized ' . $count . ' record(s).');
+    }
+}
+add_action('eeppj_pqrrs_retention_cron', 'eeppj_pqrrs_run_retention');
 
 /* ====== Initialize plugin components ====== */
 function eeppj_pqrrs_init() {

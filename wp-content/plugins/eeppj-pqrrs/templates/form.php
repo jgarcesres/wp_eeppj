@@ -84,6 +84,13 @@ defined('ABSPATH') || exit;
       </div>
     <?php endif; ?>
 
+    <div class="pqrrs-privacy-notice">
+      <strong>Aviso de privacidad — Ley 1581 de 2012</strong>
+      <p>Empresas Públicas de Jericó S.A E.S.P., como responsable del tratamiento de datos personales, le informa que los datos suministrados en este formulario (nombre, cédula, correo, teléfono e IP) serán utilizados exclusivamente para tramitar su solicitud PQRRS conforme a la Ley 1755 de 2015.</p>
+      <p>Sus datos se almacenan de forma cifrada y se conservan durante el período legalmente establecido, tras el cual son anonimizados automáticamente. Usted tiene derecho a conocer, actualizar, rectificar y solicitar la supresión de sus datos personales dirigiéndose a nuestra oficina de atención o al correo de contacto institucional.</p>
+      <p>Al enviar este formulario, usted autoriza el tratamiento de sus datos personales para los fines aquí descritos.</p>
+    </div>
+
     <button type="submit" class="btn-primary pqrrs-submit" id="pqrrs-submit">
       <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
