@@ -12,6 +12,9 @@ echo "==> Setting permalink structure..."
 $WP rewrite structure '/%postname%/' --hard
 $WP rewrite flush --hard
 
+echo "==> Configuring PQRRS for CI (no Turnstile keys)..."
+$WP option update eeppj_pqrrs_require_turnstile 0
+
 echo "==> Creating pages..."
 
 # Homepage
