@@ -2,10 +2,10 @@
 
 ## What is this project?
 
-Custom WordPress theme + plugins for Empresas Públicas de Jericó S.A E.S.P., a Colombian municipal utility company. This reproduces the design of the Astro static site (https://eeppjj.pages.dev) as a WordPress theme for deployment on ColombiaHosting (cPanel/LiteSpeed).
+Custom WordPress theme + plugins for Empresas Públicas de Jericó S.A E.S.P., a Colombian municipal utility company. The design was prototyped as an Astro static site (https://eeppjj.pages.dev) and this WordPress theme reproduces that design for deployment on ColombiaHosting (cPanel/LiteSpeed).
 
-**Source design**: https://eeppjj.pages.dev (Astro site in `~/workspace/eeppjj`)
-**This repo**: WordPress theme that faithfully matches that design
+**Design reference**: https://eeppjj.pages.dev (Astro prototype in `~/workspace/eeppjj`)
+**This repo**: WordPress theme built from that design reference
 **Target hosting**: ColombiaHosting — cPanel, LiteSpeed, PHP 7.4+, WordPress 6.8
 
 ## Project structure
@@ -61,6 +61,24 @@ WP-CLI inside container:
 ```bash
 docker compose exec wordpress wp <command> --allow-root
 ```
+
+## Releases
+
+Components are released independently via GitHub tags. The release workflow (`.github/workflows/release.yml`) handles everything automatically:
+
+1. **Bump version** in the component's main file (both plugin header `Version:` and the PHP constant)
+2. **Commit and push** to `main`
+3. **Push a tag** — the workflow builds the zip and creates the GitHub Release
+
+Tag format: `{component}/v{version}`
+
+```bash
+git tag pqrrs/v1.4.0 && git push origin pqrrs/v1.4.0
+git tag carousel/v1.5.0 && git push origin carousel/v1.5.0
+git tag theme/v1.4.0 && git push origin theme/v1.4.0
+```
+
+The workflow validates that the tag version matches the code version before releasing. The GitHub Updater classes in each plugin/theme pull updates from these releases.
 
 ## Important conventions
 
