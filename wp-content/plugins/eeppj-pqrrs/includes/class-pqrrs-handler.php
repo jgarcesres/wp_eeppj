@@ -94,7 +94,7 @@ class EEPPJ_PQRRS_Handler {
         $inserted = $wpdb->insert($table, [
             'submission_id' => $submission_id,
             'nombre'        => $nombre,
-            'cedula'        => $cedula,
+            'cedula'        => EEPPJ_PQRRS_Crypto::encrypt($cedula),
             'email'         => $email,
             'telefono'      => $telefono,
             'tipo'          => $tipo,

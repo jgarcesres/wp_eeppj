@@ -59,6 +59,16 @@ class EEPPJ_PQRRS_Admin {
             echo 'para prevenir spam y abuso.';
             echo '</p></div>';
         }
+
+        // Encryption notice
+        if (!EEPPJ_PQRRS_Crypto::is_configured()) {
+            echo '<div class="notice notice-warning"><p>';
+            echo '<strong>PQRRS:</strong> La clave de cifrado no está configurada. ';
+            echo 'Las cédulas se almacenan <strong>sin cifrar</strong>. ';
+            echo 'Desactive y reactive el plugin para generar la clave automáticamente, ';
+            echo 'o defina <code>EEPPJ_PQRRS_ENCRYPTION_KEY</code> en <code>wp-config.php</code>.';
+            echo '</p></div>';
+        }
     }
 
     public static function add_menus() {
@@ -92,6 +102,17 @@ class EEPPJ_PQRRS_Admin {
         register_setting('eeppj_pqrrs_settings', 'eeppj_pqrrs_max_upload', [
             'type' => 'integer', 'default' => 5, 'sanitize_callback' => 'absint',
         ]);
+        register_setting('eeppj_pqrrs_settings', 'eeppj_pqrrs_retention_enabled', [
+            'type' => 'string', 'default' => '1',
+            'sanitize_callback' => array(__CLASS__, 'sanitize_retention_enabled'),
+        ]);
+        register_setting('eeppj_pqrrs_settings', 'eeppj_pqrrs_retention_days', [
+            'type' => 'integer', 'default' => 730, 'sanitize_callback' => 'absint',
+        ]);
+    }
+
+    public static function sanitize_retention_enabled($value) {
+        return ($value === '1') ? '1' : '0';
     }
 
     public static function sanitize_require_turnstile($value) {
@@ -164,6 +185,28 @@ class EEPPJ_PQRRS_Admin {
               <tr>
                 <th>Tamaño máximo de archivo (MB)</th>
                 <td><input type="number" name="eeppj_pqrrs_max_upload" value="<?php echo esc_attr(get_option('eeppj_pqrrs_max_upload', 5)); ?>" min="1" max="25" class="small-text" /></td>
+              </tr>
+            </table>
+
+            <h2>Retención de datos (Ley 1581)</h2>
+            <table class="form-table">
+              <tr>
+                <th>Anonimización automática</th>
+                <td>
+                  <label>
+                    <input type="hidden" name="eeppj_pqrrs_retention_enabled" value="0" />
+                    <input type="checkbox" name="eeppj_pqrrs_retention_enabled" value="1" <?php checked(get_option('eeppj_pqrrs_retention_enabled', '1'), '1'); ?> />
+                    Habilitar anonimización automática de solicitudes cerradas
+                  </label>
+                  <p class="description">Solicitudes completadas o descartadas serán anonimizadas después del período de retención. Solo aplica a solicitudes cerradas.</p>
+                </td>
+              </tr>
+              <tr>
+                <th>Período de retención (días)</th>
+                <td>
+                  <input type="number" name="eeppj_pqrrs_retention_days" value="<?php echo esc_attr(get_option('eeppj_pqrrs_retention_days', 730)); ?>" min="30" max="3650" class="small-text" />
+                  <p class="description">Días antes de anonimizar datos personales (mínimo 30, máximo 3650). Por defecto: 730 (2 años).</p>
+                </td>
               </tr>
             </table>
             <?php submit_button('Guardar Ajustes'); ?>
@@ -313,7 +356,7 @@ class EEPPJ_PQRRS_Admin {
                       data-id="<?php echo esc_attr($s->id); ?>"
                       data-sid="<?php echo esc_attr($s->submission_id); ?>"
                       data-nombre="<?php echo esc_attr($s->nombre); ?>"
-                      data-cedula="<?php echo esc_attr($s->cedula); ?>"
+                      data-cedula="<?php echo esc_attr(EEPPJ_PQRRS_Crypto::decrypt($s->cedula)); ?>"
                       data-email="<?php echo esc_attr($s->email); ?>"
                       data-telefono="<?php echo esc_attr($s->telefono); ?>"
                       data-tipo="<?php echo esc_attr($s->tipo); ?>"

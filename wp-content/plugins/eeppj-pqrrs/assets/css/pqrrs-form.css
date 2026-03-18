@@ -213,6 +213,32 @@ select.pqrrs-input {
   flex-shrink: 0;
 }
 
+/* ====== Privacy notice ====== */
+.pqrrs-privacy-notice {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: #4b5563;
+}
+
+.pqrrs-privacy-notice strong {
+  display: block;
+  font-size: 0.8125rem;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.pqrrs-privacy-notice p {
+  margin: 0 0 0.5rem;
+}
+
+.pqrrs-privacy-notice p:last-child {
+  margin-bottom: 0;
+}
+
 /* ====== Mobile refinements ====== */
 @media (max-width: 639px) {
   .pqrrs-input {

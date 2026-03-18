@@ -39,6 +39,20 @@ class EEPPJ_PQRRS_Reports {
         add_action('admin_post_eeppj_pqrrs_csv', [__CLASS__, 'handle_csv_export']);
     }
 
+    /**
+     * Mask cedula showing only last 4 digits: ****1234
+     */
+    private static function mask_cedula($cedula) {
+        if ($cedula === '' || $cedula === null || $cedula === '[ANONIMIZADO]') {
+            return $cedula === null ? '' : $cedula;
+        }
+        $len = strlen($cedula);
+        if ($len <= 4) {
+            return str_repeat('*', $len);
+        }
+        return str_repeat('*', $len - 4) . substr($cedula, -4);
+    }
+
     public static function add_submenu() {
         add_submenu_page(
             'eeppj-pqrrs', 'Reportes PQRRS', 'Reportes', 'manage_options',
@@ -313,8 +327,19 @@ class EEPPJ_PQRRS_Reports {
             </div>
           </div>
 
-          <div style="margin-bottom:1rem;">
+          <div style="margin-bottom:1rem;padding:0.75rem 1rem;background:#fffbeb;border:1px solid #fbbf24;border-radius:8px;font-size:0.8125rem;color:#92400e;">
+            <strong>Ley 1581/2012 — Datos personales:</strong> El CSV estándar enmascara las cédulas. Use "Exportar completo" solo cuando sea estrictamente necesario y asegúrese de proteger el archivo resultante.
+          </div>
+          <div style="margin-bottom:1rem;display:flex;gap:0.5rem;">
             <a href="<?php echo esc_url($csv_url); ?>" class="button">Exportar CSV</a>
+            <?php
+            $full_csv_params = $csv_params . '&full=1';
+            $full_csv_url = wp_nonce_url(admin_url($full_csv_params), 'eeppj_pqrrs_csv');
+            ?>
+            <a href="<?php echo esc_url($full_csv_url); ?>" class="button"
+               onclick="return confirm('Este archivo contendrá datos personales completos (cédulas sin enmascarar) protegidos por la Ley 1581 de 2012.\n\nUsted es responsable de la custodia y tratamiento adecuado de estos datos.\n\n¿Desea continuar?');">
+              Exportar CSV completo
+            </a>
           </div>
 
           <!-- Submissions table (read-only) -->
@@ -470,6 +495,13 @@ class EEPPJ_PQRRS_Reports {
             wp_die('Parámetros inválidos.');
         }
 
+        $full_export = isset($_GET['full']) && $_GET['full'] === '1';
+
+        if ($full_export) {
+            $current_user = wp_get_current_user();
+            error_log('EEPPJ PQRRS AUDIT: Full PII CSV export for ' . $mes . ' by user "' . $current_user->user_login . '" (ID ' . $current_user->ID . ') from IP ' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+        }
+
         $date_start = $mes . '-01';
         $date_end = date('Y-m-01', strtotime($date_start . ' +1 month'));
 
@@ -516,11 +548,14 @@ class EEPPJ_PQRRS_Reports {
         }
 
         foreach ($submissions as $s) {
+            $decrypted_cedula = EEPPJ_PQRRS_Crypto::decrypt($s->cedula);
+            $cedula_value = $full_export ? $decrypted_cedula : self::mask_cedula($decrypted_cedula);
+
             fputcsv($out, [
                 $s->submission_id,
                 ucfirst($s->tipo),
                 $s->nombre,
-                $s->cedula,
+                $cedula_value,
                 $s->email,
                 $s->telefono,
                 $s->asunto,
