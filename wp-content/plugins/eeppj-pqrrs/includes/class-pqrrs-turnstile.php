@@ -18,11 +18,14 @@ class EEPPJ_PQRRS_Turnstile {
      * @return true|string  True if valid, error message if not
      */
     public static function verify($token, $ip = '') {
-        $secret = get_option('eeppj_pqrrs_turnstile_secret');
+        $secret  = get_option('eeppj_pqrrs_turnstile_secret');
+        $require = get_option('eeppj_pqrrs_require_turnstile', '1');
 
         if (empty($secret)) {
-            // No Turnstile configured — skip verification.
-            // In production, configure keys in PQRRS > Ajustes to enforce CAPTCHA.
+            if ($require === '1') {
+                return 'CAPTCHA no configurado. Contacte al administrador del sitio.';
+            }
+            // Turnstile explicitly disabled — skip verification (dev/testing only).
             return true;
         }
 

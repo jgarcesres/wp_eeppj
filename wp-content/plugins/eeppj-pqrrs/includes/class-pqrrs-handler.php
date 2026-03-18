@@ -125,16 +125,31 @@ class EEPPJ_PQRRS_Handler {
     }
 
     private static function get_client_ip() {
-        $headers = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR'];
+        $trusted_header = get_option('eeppj_pqrrs_trusted_ip_header', '');
+
+        // Only check the admin-configured trusted header, then fall back to REMOTE_ADDR.
+        // This prevents IP spoofing via untrusted X-Forwarded-For / CF-Connecting-IP headers.
+        $headers = array('REMOTE_ADDR');
+        if (!empty($trusted_header)) {
+            array_unshift($headers, $trusted_header);
+        }
+
         foreach ($headers as $header) {
             if (!empty($_SERVER[$header])) {
-                $ip = explode(',', $_SERVER[$header])[0];
+                $ip = explode(',', sanitize_text_field($_SERVER[$header]))[0];
                 $ip = trim($ip);
-                if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
                     return $ip;
                 }
             }
         }
+
+        // Fallback: accept REMOTE_ADDR even if private (local dev / intranet).
+        $remote = isset($_SERVER['REMOTE_ADDR']) ? trim(sanitize_text_field($_SERVER['REMOTE_ADDR'])) : '';
+        if (filter_var($remote, FILTER_VALIDATE_IP)) {
+            return $remote;
+        }
+
         return '0.0.0.0';
     }
 }

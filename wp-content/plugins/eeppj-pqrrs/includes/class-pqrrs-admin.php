@@ -30,9 +30,35 @@ class EEPPJ_PQRRS_Admin {
         add_action('admin_menu', [__CLASS__, 'add_menus']);
         add_action('admin_init', [__CLASS__, 'register_settings']);
         add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_admin_styles']);
+        add_action('admin_notices', [__CLASS__, 'turnstile_admin_notice']);
         add_action('wp_ajax_eeppj_pqrrs_delete', [__CLASS__, 'handle_delete']);
         add_action('wp_ajax_eeppj_pqrrs_status', [__CLASS__, 'handle_status_change']);
         add_action('wp_ajax_eeppj_pqrrs_notes', [__CLASS__, 'handle_save_notes']);
+    }
+
+    public static function turnstile_admin_notice() {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        $require = get_option('eeppj_pqrrs_require_turnstile', '1');
+        $site_key = get_option('eeppj_pqrrs_turnstile_site_key');
+        $secret   = get_option('eeppj_pqrrs_turnstile_secret');
+        $keys_missing = empty($site_key) || empty($secret);
+
+        if ($keys_missing && $require === '1') {
+            echo '<div class="notice notice-error"><p>';
+            echo '<strong>PQRRS:</strong> Turnstile CAPTCHA está habilitado pero las claves no están configuradas. ';
+            echo 'El formulario <strong>rechazará</strong> todas las solicitudes hasta que configure las claves en ';
+            echo '<a href="' . esc_url(admin_url('admin.php?page=eeppj-pqrrs-settings')) . '">Ajustes PQRRS</a>.';
+            echo '</p></div>';
+        } elseif ($keys_missing && $require !== '1') {
+            echo '<div class="notice notice-warning"><p>';
+            echo '<strong>PQRRS:</strong> El formulario está funcionando <strong>sin protección CAPTCHA</strong>. ';
+            echo 'Se recomienda configurar Cloudflare Turnstile en ';
+            echo '<a href="' . esc_url(admin_url('admin.php?page=eeppj-pqrrs-settings')) . '">Ajustes PQRRS</a> ';
+            echo 'para prevenir spam y abuso.';
+            echo '</p></div>';
+        }
     }
 
     public static function add_menus() {
@@ -53,6 +79,12 @@ class EEPPJ_PQRRS_Admin {
     public static function register_settings() {
         register_setting('eeppj_pqrrs_settings', 'eeppj_pqrrs_turnstile_site_key');
         register_setting('eeppj_pqrrs_settings', 'eeppj_pqrrs_turnstile_secret');
+        register_setting('eeppj_pqrrs_settings', 'eeppj_pqrrs_require_turnstile', [
+            'type' => 'string', 'default' => '1', 'sanitize_callback' => 'sanitize_text_field',
+        ]);
+        register_setting('eeppj_pqrrs_settings', 'eeppj_pqrrs_trusted_ip_header', [
+            'type' => 'string', 'default' => '', 'sanitize_callback' => 'sanitize_text_field',
+        ]);
         register_setting('eeppj_pqrrs_settings', 'eeppj_pqrrs_notification_email');
         register_setting('eeppj_pqrrs_settings', 'eeppj_pqrrs_webhook_url');
         register_setting('eeppj_pqrrs_settings', 'eeppj_pqrrs_max_upload', [
@@ -80,6 +112,28 @@ class EEPPJ_PQRRS_Admin {
               <tr>
                 <th>Turnstile Secret Key</th>
                 <td><input type="password" name="eeppj_pqrrs_turnstile_secret" value="<?php echo esc_attr(get_option('eeppj_pqrrs_turnstile_secret')); ?>" class="regular-text" /></td>
+              </tr>
+              <tr>
+                <th>Requerir Turnstile</th>
+                <td>
+                  <label>
+                    <input type="checkbox" name="eeppj_pqrrs_require_turnstile" value="1" <?php checked(get_option('eeppj_pqrrs_require_turnstile', '1'), '1'); ?> />
+                    Exigir verificación CAPTCHA en el formulario
+                  </label>
+                  <p class="description">Si está activado y las claves no están configuradas, el formulario rechazará las solicitudes. Desactive solo para desarrollo local.</p>
+                </td>
+              </tr>
+              <tr>
+                <th>Cabecera IP de confianza</th>
+                <td>
+                  <?php $trusted_header = get_option('eeppj_pqrrs_trusted_ip_header', ''); ?>
+                  <select name="eeppj_pqrrs_trusted_ip_header">
+                    <option value="" <?php selected($trusted_header, ''); ?>>Ninguna (usar REMOTE_ADDR)</option>
+                    <option value="HTTP_CF_CONNECTING_IP" <?php selected($trusted_header, 'HTTP_CF_CONNECTING_IP'); ?>>CF-Connecting-IP (Cloudflare)</option>
+                    <option value="HTTP_X_FORWARDED_FOR" <?php selected($trusted_header, 'HTTP_X_FORWARDED_FOR'); ?>>X-Forwarded-For (proxy genérico)</option>
+                  </select>
+                  <p class="description">Seleccione solo si el servidor está detrás de un proxy/CDN de confianza. De lo contrario, un atacante puede falsificar su IP para evadir el límite de solicitudes.</p>
+                </td>
               </tr>
               <tr>
                 <th>Email de Notificación</th>
