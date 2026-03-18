@@ -9,5 +9,8 @@ db_data/
 .vscode/
 .idea/
 
+# Internal docs (migration plans, credentials, client notes)
+docs/internal/
+
 # Node (if we add build tools later)
 node_modules/
